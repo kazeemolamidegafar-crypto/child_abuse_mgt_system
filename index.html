@@ -190,9 +190,115 @@ footer.appfoot { text-align:center; color: var(--muted); font-size:0.78rem; padd
        no real authentication, and no persistence — do not use this for
        any real case data.
        ============================================================ */
-    let nextId = { user: 1, child: 1, case: 1, referral: 1, note: 1, log: 1 };
+    /* ============================================================
+   PERSISTENT CLIENT-SIDE DATABASE
+   Data is stored in localStorage and survives reloads/browser
+   restarts for this browser + origin.
+   ============================================================ */
+const STORAGE_KEY = 'childProtectionCMS_database_v1';
 
-    const db = { users: [], children: [], cases: [], referrals: [], notes: [], auditLogs: [] };
+let nextId = {
+    user: 1,
+    child: 1,
+    case: 1,
+    referral: 1,
+    note: 1,
+    log: 1
+};
+
+let db = {
+    users: [],
+    children: [],
+    cases: [],
+    referrals: [],
+    notes: [],
+    auditLogs: []
+};
+
+function saveDatabase() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 1,
+            nextId,
+            db
+        }));
+    } catch (error) {
+        console.error('Unable to save application data:', error);
+        setFlash('error', 'Unable to save data to this browser.');
+    }
+}
+
+function loadDatabase() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+
+        if (!raw) {
+            return false;
+        }
+
+        const saved = JSON.parse(raw);
+
+        if (!saved || saved.version !== 1 || !saved.db) {
+            return false;
+        }
+
+        db = {
+            users: Array.isArray(saved.db.users) ? saved.db.users : [],
+            children: Array.isArray(saved.db.children) ? saved.db.children : [],
+            cases: Array.isArray(saved.db.cases) ? saved.db.cases : [],
+            referrals: Array.isArray(saved.db.referrals) ? saved.db.referrals : [],
+            notes: Array.isArray(saved.db.notes) ? saved.db.notes : [],
+            auditLogs: Array.isArray(saved.db.auditLogs) ? saved.db.auditLogs : []
+        };
+
+        nextId = {
+            user: Number(saved.nextId?.user) || 1,
+            child: Number(saved.nextId?.child) || 1,
+            case: Number(saved.nextId?.case) || 1,
+            referral: Number(saved.nextId?.referral) || 1,
+            note: Number(saved.nextId?.note) || 1,
+            log: Number(saved.nextId?.log) || 1
+        };
+
+        /*
+         * Safety: make sure IDs cannot collide if data was previously
+         * saved with an older/incomplete nextId value.
+         */
+        nextId.user = Math.max(nextId.user, ...db.users.map(x => Number(x.id) + 1), 1);
+        nextId.child = Math.max(nextId.child, ...db.children.map(x => Number(x.id) + 1), 1);
+        nextId.case = Math.max(nextId.case, ...db.cases.map(x => Number(x.id) + 1), 1);
+        nextId.referral = Math.max(nextId.referral, ...db.referrals.map(x => Number(x.id) + 1), 1);
+        nextId.note = Math.max(nextId.note, ...db.notes.map(x => Number(x.id) + 1), 1);
+        nextId.log = Math.max(nextId.log, ...db.auditLogs.map(x => Number(x.id) + 1), 1);
+
+        return true;
+    } catch (error) {
+        console.error('Unable to load saved application data:', error);
+        return false;
+    }
+}
+
+function clearDatabase() {
+    localStorage.removeItem(STORAGE_KEY);
+
+    db = {
+        users: [],
+        children: [],
+        cases: [],
+        referrals: [],
+        notes: [],
+        auditLogs: []
+    };
+
+    nextId = {
+        user: 1,
+        child: 1,
+        case: 1,
+        referral: 1,
+        note: 1,
+        log: 1
+    };
+}
 
     function refCode(prefix) {
         const hex = Array.from({ length: 8 }, () => "0123456789ABCDEF"[Math.floor(Math.random() * 16)]).join('');
