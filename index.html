@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Child Protection Case Management System (Demo)</title>
+<style>
+:root {
+    --primary: #2f5233;
+    --primary-dark: #1f3a22;
+    --bg: #f5f6f5;
+    --card: #ffffff;
+    --border: #dfe3e0;
+    --text: #22292a;
+    --muted: #6b7674;
+    --danger: #b3261e;
+    --success: #2e7d32;
+    --info: #1565c0;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--primary);
+    color: #fff;
+    padding: 0.8rem 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.brand { font-weight: 700; font-size: 1.05rem; }
+.brand small { display:block; font-weight:400; font-size:0.7rem; opacity:0.85; }
+.nav-links a {
+    color: #eef3ee;
+    text-decoration: none;
+    margin-right: 1rem;
+    font-size: 0.92rem;
+    cursor: pointer;
+}
+.nav-links a:hover, .nav-links a.active { text-decoration: underline; }
+.nav-user { display: flex; align-items: center; gap: 0.8rem; font-size: 0.88rem; }
+.btn-logout {
+    background: var(--primary-dark);
+    color: #fff;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem 3rem; }
+h1 { font-size: 1.5rem; margin-bottom: 0.8rem; }
+h2 { font-size: 1.1rem; margin-top: 0; color: var(--primary-dark); }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.disclaimer {
+    background: #fff7e0; border: 1px solid #e6cf8a; color: #6b5b12;
+    padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.82rem; margin: 0.8rem 0 1.2rem;
+}
+.login-wrap { display: flex; justify-content: center; margin-top: 4rem; }
+.login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+.login-card h1 { font-size: 1.2rem; }
+form label { display: block; margin-top: 0.7rem; font-size: 0.85rem; font-weight: 600; }
+input, select, textarea, button { font-family: inherit; font-size: 0.95rem; }
+input[type=text], input[type=password], input[type=date], select, textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+.btn-primary {
+    margin-top: 1rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-small {
+    background: var(--primary-dark);
+    color: #fff;
+    border: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+.btn-small:hover { opacity:0.9; }
+.inline-form { display: flex; gap: 0.4rem; margin-top: 0.4rem; align-items: center; flex-wrap: wrap; }
+.form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin-bottom: 1.2rem;
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .navbar{flex-direction:column;align-items:flex-start;} }
+.data-table { width: 100%; border-collapse: collapse; background: var(--card); margin-bottom: 1rem; }
+.data-table th, .data-table td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.data-table th { background: #eef1ee; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+.badge { display:inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background:#e2e6e2; color: var(--text); }
+.badge-active { background:#d9ecd9; color: var(--success); }
+.badge-inactive { background:#f2d9d7; color: var(--danger); }
+.status-Reported { background:#e3edfa; color: var(--info); }
+.status-UnderReview { background:#fdf1cf; color:#8a6d00; }
+.status-Referred { background:#e6dcf7; color:#5a2a9c; }
+.status-UnderInvestigation { background:#fbe0d3; color:#a3480f; }
+.status-Closed { background:#dcece0; color: var(--success); }
+.stat-row { display:flex; gap:0.8rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+.stat-card { background: var(--card); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1.2rem; min-width:110px; text-align:center; }
+.stat-num { display:block; font-size:1.5rem; font-weight:700; color: var(--primary-dark); }
+.stat-card span:last-child { font-size:0.78rem; color: var(--muted); }
+.filter-bar { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+.filter-bar input { width:auto; margin-top:0; }
+.note-list { list-style:none; padding:0; margin:0.6rem 0 0; }
+.note-list li { padding:0.6rem 0; border-bottom:1px solid var(--border); font-size:0.9rem; }
+.note-list li:last-child { border-bottom:none; }
+.flash { padding:0.6rem 0.9rem; border-radius:6px; margin-bottom:1rem; font-size:0.9rem; }
+.flash-success { background:#e3f3e3; color: var(--success); border:1px solid #b9dcb9; }
+.flash-error { background:#fbe4e2; color: var(--danger); border:1px solid #edb7b2; }
+.flash-info { background:#e2edfb; color: var(--info); border:1px solid #b8d3f2; }
+.search-results-list { list-style:none; padding:0; margin:0.5rem 0 0; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.search-results-list li { border-bottom:1px solid var(--border); }
+.search-results-list li:last-child { border-bottom:none; }
+.search-results-list button.pick-child {
+    width:100%; text-align:left; background:#fff; border:none; padding:0.5rem 0.7rem; cursor:pointer; font-size:0.88rem;
+}
+.search-results-list button.pick-child:hover { background:#eef3ee; }
+.error-page { text-align:center; margin-top:4rem; }
+.error-page h1 { font-size:2.2rem; color: var(--danger); }
+.demo-accounts { text-align:left; font-size:0.8rem; background:#eef1ee; border-radius:6px; padding:0.7rem 0.9rem; margin-top:1rem; }
+.demo-accounts button { background:none; border:1px solid var(--border); border-radius:4px; padding:0.15rem 0.4rem; font-size:0.75rem; cursor:pointer; margin-left:0.3rem; }
+code { background:#eef1ee; padding:0.05rem 0.3rem; border-radius:3px; font-size:0.85em; }
+footer.appfoot { text-align:center; color: var(--muted); font-size:0.78rem; padding:1.5rem 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function () {
+    "use strict";
+
+    /* ============================================================
+       CONSTANTS  (mirrors includes/functions.php)
+       ============================================================ */
+    const CASE_STATUSES = ['Reported', 'Under Review', 'Referred', 'Under Investigation', 'Closed'];
+    const REFERRAL_STATUSES = ['Pending', 'Acknowledged', 'Resolved'];
+    const REFERRAL_TARGETS = [
+        'Law Enforcement',
+        'Medical Services',
+        'Court / Legal Services',
+        'Psychosocial / Counselling Services',
+        'Other Agency',
+    ];
+    const CATEGORIES = [
+        'Physical Abuse',
+        'Emotional Abuse',
+        'Neglect',
+        'Sexual Abuse',
+        'Exploitation',
+        'Other Safeguarding Concern',
+    ];
+    const ROLE_LABEL = { administrator: 'Administrator', caseworker: 'Caseworker', intake_officer: 'Intake / Reporting Officer' };
+
+    /* ============================================================
+       IN-MEMORY "DATABASE"
+       This is a client-side demo: everything lives in JS memory for
+       this browser tab only and resets on reload. There is no server,
+       no real authentication, and no persistence — do not use this for
+       any real case data.
+       ============================================================ */
+    let nextId = { user: 1, child: 1, case: 1, referral: 1, note: 1, log: 1 };
+
+    const db = { users: [], children: [], cases: [], referrals: [], notes: [], auditLogs: [] };
+
+    function refCode(prefix) {
+        const hex = Array.from({ length: 8 }, () => "0123456789ABCDEF"[Math.floor(Math.random() * 16)]).join('');
+        return prefix + '-' + hex;
+    }
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function nowStamp() { return new Date().toISOString().slice(0, 19).replace('T', ' '); }
+
+    function seed() {
+        const mk = (fullName, username, password, role) => {
+            const u = { id: nextId.user++, fullName, username, password, role, isActive: true, createdAt: nowStamp() };
+            db.users.push(u);
+            return u;
+        };
+        const admin = mk('System Administrator', 'admin', 'Admin@12345', 'administrator');
+        const cw1 = mk('Blessing Adeyemi', 'caseworker1', 'Case@12345', 'caseworker');
+        const intake1 = mk('Tunde Bakare', 'intake1', 'Intake@12345', 'intake_officer');
+
+        const mkChild = (fullName, dob, guardianContact, address) => {
+            const c = { id: nextId.child++, refCode: refCode('CH'), fullName, dob, guardianContact, address, createdAt: nowStamp() };
+            db.children.push(c);
+            return c;
+        };
+        const child1 = mkChild('Ada N. (minor)', '2015-03-11', 'Aunt — 080xxxxxxx', 'Ikeja, Lagos');
+        const child2 = mkChild('Femi O. (minor)', '2013-09-02', 'Mother — 070xxxxxxx', 'Surulere, Lagos');
+
+        const mkCase = (child, category, dateReported, reportedBy, assignedCaseworker, status, summary) => {
+            const c = {
+                id: nextId.case++, refNumber: refCode('CASE'), childId: child.id, category, dateReported,
+                reportedByUserId: reportedBy.id, assignedCaseworkerId: assignedCaseworker ? assignedCaseworker.id : null,
+                status, summary, createdAt: nowStamp(), updatedAt: nowStamp(),
+            };
+            db.cases.push(c);
+            return c;
+        };
+        const case1 = mkCase(child1, 'Neglect', '2026-08-02', intake1, cw1, 'Referred',
+            'Reported by a school teacher; concerns about consistent lack of supervision and missed meals.');
+        mkCase(child2, 'Emotional Abuse', '2026-08-20', intake1, null, 'Reported',
+            'Reported by a neighbor; concerns about a hostile home environment.');
+
+        db.referrals.push({
+            id: nextId.referral++, caseId: case1.id, referredTo: 'Psychosocial / Counselling Services',
+            dateReferred: '2026-08-05', status: 'Acknowledged', outcomeNotes: 'Initial counselling session scheduled.',
+            createdByUserId: cw1.id, createdAt: nowStamp(),
+        });
+        db.notes.push({
+            id: nextId.note++, caseId: case1.id, authorUserId: cw1.id,
+            text: 'Home visit completed. Recommending continued monitoring alongside counselling referral.', createdAt: nowStamp(),
+        });
+
+        logAction(null, null, 'SYSTEM_SEED', null, null, 'Demo data initialized');
+    }
+
+    /* ============================================================
+       AUDIT LOG  (append-only; mirrors log_action())
+       ============================================================ */
+    function logAction(userId, username, action, targetEntity, targetId, details) {
+        db.auditLogs.push({
+            id: nextId.log++, userId: userId ?? null, username: username ?? null, action,
+            targetEntity: targetEntity ?? null, targetId: targetId ?? null, details: details ?? null,
+            timestamp: nowStamp(),
+        });
+    }
+
+    /* ============================================================
+       APP STATE
+       ============================================================ */
+    const state = {
+        currentUser: null,
+        view: 'login',
+        params: {},
+        flash: null,
+        loginError: '',
+    };
+
+    function setFlash(type, message) { state.flash = { type, message }; }
+
+    function navigate(view, params) {
+        state.view = view;
+        state.params = params || {};
+        state.flash = null;
+        performViewSideEffects(view, state.params);
+        render();
+    }
+
+    function performViewSideEffects(view, params) {
+        const u = state.currentUser;
+        if (!u) return;
+        if (view === 'case_view') {
+            logAction(u.id, u.username, 'VIEW_CASE', 'cases', params.caseId);
+        } else if (view === 'admin_audit') {
+            logAction(u.id, u.username, 'VIEW_AUDIT_LOG', 'audit_logs', null);
+        } else if (view === 'admin_reports') {
+            logAction(u.id, u.username, 'EXPORT_ANONYMIZED_REPORT', 'reports', null, 'Viewed aggregate statistical report');
+        }
+    }
+
+    /* ============================================================
+       AUTH / RBAC HELPERS
+       ============================================================ */
+    function requireRole(...roles) {
+        const u = state.currentUser;
+        if (!u) { state.view = 'login'; return false; }
+        if (!roles.includes(u.role)) {
+            logAction(u.id, u.username, 'ACCESS_DENIED', null, null, 'view=' + state.view);
+            state.view = 'forbidden';
+            return false;
+        }
+        return true;
+    }
+
+    function getCaseOr403(caseId) {
+        const u = state.currentUser;
+        const c = db.cases.find(x => x.id === caseId);
+        if (!c) { state.view = 'notfound'; return null; }
+        if (u.role === 'administrator') return c;
+        if (u.role === 'caseworker' && c.assignedCaseworkerId === u.id) return c;
+        if (u.role === 'intake_officer' && c.reportedByUserId === u.id) return c;
+        logAction(u.id, u.username, 'ACCESS_DENIED', 'cases', caseId);
+        state.view = 'forbidden';
+        return null;
+    }
+
+    function canEditCase(c) {
+        const u = state.currentUser;
+        if (u.role === 'administrator') return true;
+        if (u.role === 'caseworker') return c.assignedCaseworkerId === u.id;
+        return false;
+    }
+
+    /* ============================================================
+       SMALL DOM / ESCAPE HELPERS
+       ============================================================ */
+    function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function nl2br(v) { return esc(v).replace(/\n/g, '<br>'); }
+    function statusClass(s) { return 'status-' + s.replace(/ /g, ''); }
+    function userById(id) { return db.users.find(u => u.id === id); }
+    function childById(id) { return db.children.find(c => c.id === id); }
+
+    const app = document.getElementById('app');
+    function render() { app.innerHTML = renderView(); bindEvents(); }
+
+    /* ============================================================
+       VIEW RENDERERS
+       ============================================================ */
+    function renderView() {
+        if (!state.currentUser) return renderLogin();
+        switch (state.view) {
+            case 'admin_dashboard': return requireRole('administrator') ? renderAdminDashboard() : renderView();
+            case 'admin_users': return requireRole('administrator') ? renderAdminUsers() : renderView();
+            case 'admin_audit': return requireRole('administrator') ? renderAdminAudit() : renderView();
+            case 'admin_reports': return requireRole('administrator') ? renderAdminReports() : renderView();
+            case 'case_list': return requireRole('caseworker', 'administrator') ? renderCaseList() : renderView();
+            case 'intake_dashboard': return requireRole('intake_officer', 'administrator') ? renderIntakeDashboard() : renderView();
+            case 'case_view': return renderCaseViewGuarded();
+            case 'forbidden': return wrapWithChrome(renderForbidden());
+            case 'notfound': return wrapWithChrome(renderNotFound());
+            default: return renderIndexRedirect();
+        }
+    }
+
+    function renderIndexRedirect() {
+        const u = state.currentUser;
+        if (u.role === 'administrator') { state.view = 'admin_dashboard'; }
+        else if (u.role === 'caseworker') { state.view = 'case_list'; }
+        else { state.view = 'intake_dashboard'; }
+        return renderView();
+    }
+
+    function renderCaseViewGuarded() {
+        // wrap so that a 403/404 mid-render still gets full chrome
+        const html = renderCaseView();
+        return wrapWithChrome(html);
+    }
+
+    /* ---------- Chrome (navbar) ---------- */
+    function wrapWithChrome(innerHtml) {
+        const u = state.currentUser;
+        let links = '';
+        if (u.role === 'administrator') {
+            links = `
+                <a data-nav="admin_dashboard" class="${state.view === 'admin_dashboard' ? 'active' : ''}">Overview</a>
+                <a data-nav="case_list" class="${state.view === 'case_list' ? 'active' : ''}">All Cases</a>
+                <a data-nav="admin_users" class="${state.view === 'admin_users' ? 'active' : ''}">Users</a>
+                <a data-nav="admin_audit" class="${state.view === 'admin_audit' ? 'active' : ''}">Audit Log</a>
+                <a data-nav="admin_reports" class="${state.view === 'admin_reports' ? 'active' : ''}">Reports</a>
+            `;
+        } else if (u.role === 'caseworker') {
+            links = `<a data-nav="case_list" class="${state.view === 'case_list' ? 'active' : ''}">My Caseload</a>`;
+        } else {
+            links = `<a data-nav="intake_dashboard" class="${state.view === 'intake_dashboard' ? 'active' : ''}">Register a Case</a>`;
+        }
+        const flash = state.flash ? `<div class="flash flash-${esc(state.flash.type)}">${esc(state.flash.message)}</div>` : '';
+        return `
+        <div class="navbar">
+            <div class="brand">Child Protection CMS<small>Client-side demo — not for real case data</small></div>
+            <div class="nav-links">${links}</div>
+            <div class="nav-user">
+                <span>${esc(u.fullName)} &middot; ${esc(ROLE_LABEL[u.role])}</span>
+                <button class="btn-logout" data-action="logout">Log out</button>
+            </div>
+        </div>
+        <div class="container">
+            <div class="disclaimer">This is a browser-only prototype rebuilt from a PHP/MySQL reference design. All data is
+            held in memory in this tab and is lost on reload — there is no real backend, encryption, or audit-log
+            immutability here. Do not enter real names or real case details.</div>
+            ${flash}
+            ${innerHtml}
+        </div>
+        <footer class="appfoot">Demo prototype for educational / architectural reference only.</footer>
+        `;
+    }
+
+    /* ---------- Login ---------- */
+    function renderLogin() {
+        const err = state.loginError ? `<div class="flash flash-error">${esc(state.loginError)}</div>` : '';
+        return `
+        <div class="login-wrap">
+            <div class="login-card">
+                <h1>Child Protection Case Management</h1>
+                <p class="muted">Sign in to continue</p>
+                ${err}
+                <form id="login-form">
+                    <label>Username</label>
+                    <input type="text" name="username" id="login-username" required autocomplete="off">
+                    <label>Password</label>
+                    <input type="password" name="password" id="login-password" required>
+                    <button type="submit" class="btn-primary">Log In</button>
+                </form>
+                <div class="demo-accounts">
+                    <b>Demo accounts</b> (client-side only — for exploring the prototype):
+                    <ul style="padding-left:1.1rem; margin:0.4rem 0 0;">
+                        <li>Administrator — <code>admin</code> / <code>Admin@12345</code>
+                            <button type="button" data-fill="admin,Admin@12345">Use</button></li>
+                        <li>Caseworker — <code>caseworker1</code> / <code>Case@12345</code>
+                            <button type="button" data-fill="caseworker1,Case@12345">Use</button></li>
+                        <li>Intake Officer — <code>intake1</code> / <code>Intake@12345</code>
+                            <button type="button" data-fill="intake1,Intake@12345">Use</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    /* ---------- Forbidden / Not found ---------- */
+    function renderForbidden() {
+        return `<div class="error-page"><h1>403</h1><p>You don't have permission to view that page or record.</p>
+        <p class="muted">This access attempt has been written to the audit log.</p></div>`;
+    }
+    function renderNotFound() {
+        return `<div class="error-page"><h1>404</h1><p>That record could not be found.</p></div>`;
+    }
+
+    /* ---------- Admin: Dashboard ---------- */
+    function renderAdminDashboard() {
+        const statusCounts = {};
+        CASE_STATUSES.forEach(s => statusCounts[s] = 0);
+        db.cases.forEach(c => statusCounts[c.status]++);
+        const totalCases = db.cases.length;
+        const totalChildren = db.children.length;
+        const recentLogs = [...db.auditLogs].sort((a, b) => b.id - a.id).slice(0, 10);
+
+        const statCards = [
+            `<div class="stat-card"><span class="stat-num">${totalCases}</span><span>Total Cases</span></div>`,
+            `<div class="stat-card"><span class="stat-num">${totalChildren}</span><span>Child Records</span></div>`,
+            ...CASE_STATUSES.map(s => `<div class="stat-card"><span class="stat-num">${statusCounts[s]}</span><span>${esc(s)}</span></div>`),
+        ].join('');
+
+        const rows = recentLogs.length ? recentLogs.map(l => `
+            <tr>
+                <td>${esc(l.timestamp)}</td>
+                <td>${esc(l.username || '—')}</td>
+                <td>${esc(l.action)}</td>
+                <td>${esc(((l.targetEntity || '') + ' ' + (l.targetId || '')).trim())}</td>
+                <td>${esc(l.details || '')}</td>
+            </tr>`).join('') : `<tr><td colspan="5">No activity recorded yet.</td></tr>`;
+
+        return wrapWithChrome(`
+            <h1>Administrator Overview</h1>
+            <div class="stat-row">${statCards}</div>
+            <h2>Recent Audit Activity</h2>
+            <table class="data-table">
+                <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <p><a data-nav="admin_audit" href="#">View full audit trail &rarr;</a></p>
+        `);
+    }
+
+    /* ---------- Admin: Users ---------- */
+    function renderAdminUsers() {
+        const rows = db.users.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(u => `
+            <tr>
+                <td>${esc(u.fullName)}</td>
+                <td>${esc(u.username)}</td>
+                <td>${esc(ROLE_LABEL[u.role])}</td>
+                <td>${u.isActive ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Deactivated</span>'}</td>
+                <td><button class="btn-small" data-action="toggle-user" data-id="${u.id}">${u.isActive ? 'Deactivate' : 'Reactivate'}</button></td>
+            </tr>`).join('');
+
+        return wrapWithChrome(`
+            <h1>User &amp; Role Management</h1>
+            <div class="two-col">
+                <div>
+                    <h2>Create Account</h2>
+                    <form id="create-user-form" class="form-card">
+                        <label>Full Name</label>
+                        <input type="text" name="full_name" required>
+                        <label>Username</label>
+                        <input type="text" name="username" required>
+                        <label>Temporary Password (min. 8 characters)</label>
+                        <input type="password" name="password" required minlength="8">
+                        <label>Role</label>
+                        <select name="role" required>
+                            <option value="administrator">Administrator</option>
+                            <option value="caseworker">Caseworker</option>
+                            <option value="intake_officer">Intake / Reporting Officer</option>
+                        </select>
+                        <button type="submit" class="btn-primary">Create User</button>
+                    </form>
+                </div>
+                <div>
+                    <h2>Existing Accounts</h2>
+                    <table class="data-table">
+                        <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `);
+    }
+
+    /* ---------- Admin: Audit Log ---------- */
+    function renderAdminAudit() {
+        const f = state.params.filters || {};
+        let logs = [...db.auditLogs];
+        if (f.user) logs = logs.filter(l => (l.username || '').toLowerCase().includes(f.user.toLowerCase()));
+        if (f.from) logs = logs.filter(l => l.timestamp >= f.from + ' 00:00:00');
+        if (f.to) logs = logs.filter(l => l.timestamp <= f.to + ' 23:59:59');
+        logs.sort((a, b) => b.id - a.id);
+        logs = logs.slice(0, 500);
+
+        const rows = logs.length ? logs.map(l => `
+            <tr>
+                <td>${esc(l.timestamp)}</td>
+                <td>${esc(l.username || '—')}</td>
+                <td>${esc(l.action)}</td>
+                <td>${esc(((l.targetEntity || '') + ' ' + (l.targetId || '')).trim())}</td>
+                <td>${esc(l.details || '')}</td>
+            </tr>`).join('') : `<tr><td colspan="5">No matching audit entries.</td></tr>`;
+
+        return wrapWithChrome(`
+            <h1>Audit Trail</h1>
+            <form id="audit-filter-form" class="filter-bar">
+                <input type="text" name="user" placeholder="Filter by username" value="${esc(f.user || '')}">
+                <input type="date" name="from" value="${esc(f.from || '')}">
+                <input type="date" name="to" value="${esc(f.to || '')}">
+                <button type="submit" class="btn-small">Filter</button>
+            </form>
+            <table class="data-table">
+                <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <p class="muted">Showing up to 500 most recent matching entries. This log is append-only; there is no
+            interface anywhere in this system to edit or delete an entry.</p>
+        `);
+    }
+
+    /* ---------- Admin: Reports ---------- */
+    function renderAdminReports() {
+        const byStatus = {};
+        CASE_STATUSES.forEach(s => byStatus[s] = 0);
+        db.cases.forEach(c => byStatus[c.status]++);
+
+        const byCategory = {};
+        CATEGORIES.forEach(c => byCategory[c] = 0);
+        db.cases.forEach(c => byCategory[c.category] = (byCategory[c.category] || 0) + 1);
+
+        const byMonth = {};
+        db.cases.forEach(c => { const m = c.dateReported.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + 1; });
+        const months = Object.keys(byMonth).sort();
+
+        const byReferral = {};
+        REFERRAL_STATUSES.forEach(s => byReferral[s] = 0);
+        db.referrals.forEach(r => byReferral[r.status]++);
+
+        const rowsOf = (obj) => Object.entries(obj).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');
+
+        return wrapWithChrome(`
+            <h1>Anonymized Statistical Reports</h1>
+            <p class="muted">These figures are aggregate counts only. No individually identifying information is
+            displayed on this page.</p>
+            <div class="two-col">
+                <div class="form-card">
+                    <h2>Cases by Status</h2>
+                    <table class="data-table"><thead><tr><th>Status</th><th>Count</th></tr></thead>
+                    <tbody>${rowsOf(byStatus)}</tbody></table>
+                </div>
+                <div class="form-card">
+                    <h2>Cases by Category of Concern</h2>
+                    <table class="data-table"><thead><tr><th>Category</th><th>Count</th></tr></thead>
+                    <tbody>${rowsOf(byCategory)}</tbody></table>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="form-card">
+                    <h2>Cases Reported by Month</h2>
+                    <table class="data-table"><thead><tr><th>Month</th><th>Count</th></tr></thead>
+                    <tbody>${months.length ? months.map(m => `<tr><td>${esc(m)}</td><td>${byMonth[m]}</td></tr>`).join('') : '<tr><td colspan="2">No data yet.</td></tr>'}</tbody></table>
+                </div>
+                <div class="form-card">
+                    <h2>Referral Outcomes</h2>
+                    <table class="data-table"><thead><tr><th>Referral Status</th><th>Count</th></tr></thead>
+                    <tbody>${rowsOf(byReferral)}</tbody></table>
+                </div>
+            </div>
+        `);
+    }
+
+    /* ---------- Caseworker / Admin: Case list ---------- */
+    function renderCaseList() {
+        const u = state.currentUser;
+        let cases = u.role === 'administrator' ? [...db.cases] : db.cases.filter(c => c.assignedCaseworkerId === u.id);
+        cases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+        const rows = cases.length ? cases.map(c => {
+            const child = childById(c.childId);
+            return `<tr>
+                <td>${esc(c.refNumber)}</td>
+                <td>${esc(child ? child.fullName : '—')}</td>
+                <td>${esc(c.category)}</td>
+                <td>${esc(c.dateReported)}</td>
+                <td><span class="badge ${statusClass(c.status)}">${esc(c.status)}</span></td>
+                <td><a href="#" data-nav="case_view" data-case-id="${c.id}">Open</a></td>
+            </tr>`;
+        }).join('') : `<tr><td colspan="6">No cases ${u.role === 'administrator' ? 'recorded yet.' : 'assigned yet.'}</td></tr>`;
+
+        return wrapWithChrome(`
+            <h1>${u.role === 'administrator' ? 'All Cases' : 'My Assigned Cases'}</h1>
+            <table class="data-table">
+                <thead><tr><th>Reference</th><th>Child</th><th>Category</th><th>Reported</th><th>Status</th><th></th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `);
+    }
+
+    /* ---------- Intake dashboard ---------- */
+    function renderIntakeDashboard() {
+        const u = state.currentUser;
+        const myCases = db.cases.filter(c => c.reportedByUserId === u.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        const searchQuery = state.params.childQuery || '';
+        const pickedChild = state.params.pickedChild || null;
+
+        let searchResultsHtml = '';
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            const results = db.children.filter(c => c.fullName.toLowerCase().includes(q) || c.refCode.toLowerCase().includes(q)).slice(0, 20);
+            logAction(u.id, u.username, 'SEARCH_CHILD', 'children', null, "query='" + searchQuery + "'");
+            if (results.length) {
+                searchResultsHtml = `<ul class="search-results-list">${results.map(r => `
+                    <li><button type="button" class="pick-child" data-action="pick-child" data-id="${r.id}" data-name="${esc(r.fullName)}" data-ref="${esc(r.refCode)}">
+                        ${esc(r.fullName)} &mdash; <code>${esc(r.refCode)}</code>${r.dob ? ' (DOB: ' + esc(r.dob) + ')' : ''}
+                    </button></li>`).join('')}</ul>`;
+            } else {
+                searchResultsHtml = `<p class="muted">No matching child record found. A new record will be created below.</p>`;
+            }
+        }
+
+        const banner = pickedChild
+            ? `<div class="flash flash-info">Linking to existing record: ${esc(pickedChild.name)} (${esc(pickedChild.ref)})
+               <button type="button" class="btn-small" data-action="clear-picked-child" style="margin-left:0.6rem;">Clear</button></div>`
+            : '';
+
+        const rows = myCases.length ? myCases.map(c => {
+            const child = childById(c.childId);
+            return `<tr>
+                <td>${esc(c.refNumber)}</td>
+                <td>${esc(child ? child.fullName : '—')}</td>
+                <td>${esc(c.category)}</td>
+                <td><span class="badge ${statusClass(c.status)}">${esc(c.status)}</span></td>
+                <td><a href="#" data-nav="case_view" data-case-id="${c.id}">View</a></td>
+            </tr>`;
+        }).join('') : `<tr><td colspan="5">You have not registered any cases yet.</td></tr>`;
+
+        return wrapWithChrome(`
+            <h1>Register a New Report</h1>
+            <div class="form-card">
+                <h2>Step 1 &mdash; Check for an existing child record</h2>
+                <input type="text" id="child-search" placeholder="Search by name or reference code..." autocomplete="off" value="${esc(searchQuery)}">
+                <div id="search-results">${searchResultsHtml}</div>
+            </div>
+            <form id="case-form" class="form-card">
+                <h2>Step 2 &mdash; Child details</h2>
+                ${banner}
+                <div id="new-child-fields" style="${pickedChild ? 'display:none;' : ''}">
+                    <label>Child Full Name</label>
+                    <input type="text" name="child_full_name">
+                    <label>Date of Birth</label>
+                    <input type="date" name="child_dob">
+                    <label>Guardian Contact</label>
+                    <input type="text" name="guardian_contact" placeholder="Phone / email">
+                    <label>Address</label>
+                    <input type="text" name="address">
+                </div>
+                <h2>Step 3 &mdash; Case details</h2>
+                <label>Category of Concern</label>
+                <select name="category_of_concern" required>
+                    <option value="">Select category&hellip;</option>
+                    ${CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+                </select>
+                <label>Date Reported</label>
+                <input type="date" name="date_reported" value="${today()}">
+                <label>Summary of Report</label>
+                <textarea name="summary" rows="4" placeholder="Brief, factual account of what was reported..."></textarea>
+                <button type="submit" class="btn-primary">Register Case</button>
+            </form>
+            <h2>Cases You Have Registered</h2>
+            <table class="data-table">
+                <thead><tr><th>Reference</th><th>Child</th><th>Category</th><th>Status</th><th></th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `);
+    }
+
+    /* ---------- Shared: Case view ---------- */
+    function renderCaseView() {
+        const u = state.currentUser;
+        const caseId = state.params.caseId;
+        const c = getCaseOr403(caseId);
+        if (!c) return state.view === 'forbidden' ? renderForbidden() : renderNotFound();
+
+        const child = childById(c.childId);
+        const notes = db.notes.filter(n => n.caseId === c.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        const referrals = db.referrals.filter(r => r.caseId === c.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        const caseworkers = db.users.filter(x => x.role === 'caseworker' && x.isActive);
+        const canEdit = canEditCase(c);
+
+        const childDetails = (u.role === 'administrator' || u.role === 'caseworker')
+            ? `<p><b>Date of Birth:</b> ${esc(child.dob || '—')}</p>
+               <p><b>Guardian Contact:</b> ${esc(child.guardianContact || '—')}</p>
+               <p><b>Address:</b> ${esc(child.address || '—')}</p>`
+            : `<p class="muted">Additional identifying details are restricted to the assigned caseworker and administrator.</p>`;
+
+        const assignForm = u.role === 'administrator' ? `
+            <form id="assign-form" data-case-id="${c.id}">
+                <label>Assign Caseworker</label>
+                <select name="caseworker_id">
+                    <option value="">&mdash; Unassigned &mdash;</option>
+                    ${caseworkers.map(cw => `<option value="${cw.id}" ${c.assignedCaseworkerId === cw.id ? 'selected' : ''}>${esc(cw.fullName)}</option>`).join('')}
+                </select>
+                <button type="submit" class="btn-small">Save Assignment</button>
+            </form>` : '';
+
+        const statusForm = canEdit ? `
+            <div class="form-card">
+                <h2>Update Status</h2>
+                <form id="status-form" data-case-id="${c.id}">
+                    <select name="status">
+                        ${CASE_STATUSES.map(s => `<option value="${esc(s)}" ${s === c.status ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+                    </select>
+                    <button type="submit" class="btn-primary">Update Status</button>
+                </form>
+            </div>` : '';
+
+        const noteForm = canEdit ? `
+            <form id="note-form" data-case-id="${c.id}">
+                <textarea name="note_text" rows="3" placeholder="Add a dated case note..." required></textarea>
+                <button type="submit" class="btn-small">Add Note</button>
+            </form>` : '';
+
+        const notesHtml = notes.length ? notes.map(n => {
+            const author = userById(n.authorUserId);
+            return `<li><b>${esc(author ? author.fullName : 'Unknown')}</b> &mdash; <span class="muted">${esc(n.createdAt)}</span><br>${nl2br(n.text)}</li>`;
+        }).join('') : `<li class="muted">No notes recorded.</li>`;
+
+        const referralForm = canEdit ? `
+            <form id="referral-form" data-case-id="${c.id}">
+                <select name="referred_to" required>
+                    <option value="">Refer to&hellip;</option>
+                    ${REFERRAL_TARGETS.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('')}
+                </select>
+                <input type="date" name="date_referred" value="${today()}">
+                <button type="submit" class="btn-small">Create Referral</button>
+            </form>` : '';
+
+        const referralsHtml = referrals.length ? referrals.map(r => {
+            const updateForm = canEdit ? `
+                <form class="inline-form referral-update-form" data-case-id="${c.id}" data-referral-id="${r.id}">
+                    <select name="referral_status">
+                        ${REFERRAL_STATUSES.map(rs => `<option value="${esc(rs)}" ${rs === r.status ? 'selected' : ''}>${esc(rs)}</option>`).join('')}
+                    </select>
+                    <input type="text" name="outcome_notes" placeholder="Outcome notes" value="${esc(r.outcomeNotes || '')}">
+                    <button type="submit" class="btn-small">Update</button>
+                </form>` : '';
+            return `<li>
+                <b>${esc(r.referredTo)}</b> &mdash; <span class="badge">${esc(r.status)}</span>
+                <span class="muted">(${esc(r.dateReferred)})</span>
+                ${r.outcomeNotes ? '<br>' + nl2br(r.outcomeNotes) : ''}
+                ${updateForm}
+            </li>`;
+        }).join('') : `<li class="muted">No referrals recorded.</li>`;
+
+        return `
+            <h1>Case ${esc(c.refNumber)} <span class="badge ${statusClass(c.status)}">${esc(c.status)}</span></h1>
+            <div class="two-col">
+                <div class="form-card">
+                    <h2>Child Record</h2>
+                    <p><b>Name:</b> ${esc(child.fullName)}</p>
+                    <p><b>Reference Code:</b> ${esc(child.refCode)}</p>
+                    ${childDetails}
+                </div>
+                <div class="form-card">
+                    <h2>Case Details</h2>
+                    <p><b>Category of Concern:</b> ${esc(c.category)}</p>
+                    <p><b>Date Reported:</b> ${esc(c.dateReported)}</p>
+                    <p><b>Summary:</b> ${esc(c.summary || '—')}</p>
+                    <p><b>Last Updated:</b> ${esc(c.updatedAt)}</p>
+                    ${assignForm}
+                </div>
+            </div>
+            ${statusForm}
+            <div class="two-col">
+                <div class="form-card">
+                    <h2>Case Notes</h2>
+                    ${noteForm}
+                    <ul class="note-list">${notesHtml}</ul>
+                </div>
+                <div class="form-card">
+                    <h2>Referrals</h2>
+                    ${referralForm}
+                    <ul class="note-list">${referralsHtml}</ul>
+                </div>
+            </div>
+            <p><a href="#" data-nav="back-to-dashboard">&larr; Back to dashboard</a></p>
+        `;
+    }
+
+    /* ============================================================
+       EVENT BINDING
+       ============================================================ */
+    function bindEvents() {
+        // nav links
+        app.querySelectorAll('[data-nav]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = el.getAttribute('data-nav');
+                if (target === 'back-to-dashboard') {
+                    navigate(indexViewForRole(state.currentUser.role), {});
+                } else if (target === 'case_view') {
+                    navigate('case_view', { caseId: parseInt(el.getAttribute('data-case-id'), 10) });
+                } else {
+                    navigate(target, {});
+                }
+            });
+        });
+
+        // logout
+        const logoutBtn = app.querySelector('[data-action="logout"]');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+            const u = state.currentUser;
+            logAction(u.id, u.username, 'LOGOUT', null, null);
+            state.currentUser = null;
+            state.view = 'login';
+            state.loginError = '';
+            render();
+        });
+
+        // login form
+        const loginForm = app.querySelector('#login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = app.querySelector('#login-username').value.trim();
+                const password = app.querySelector('#login-password').value;
+                const user = db.users.find(u => u.username === username && u.password === password && u.isActive);
+                if (!user) {
+                    logAction(null, username || null, 'LOGIN_FAILED', null, null, 'username=' + username);
+                    state.loginError = 'Invalid username or password, or account deactivated.';
+                    render();
+                    return;
+                }
+                state.currentUser = user;
+                state.loginError = '';
+                logAction(user.id, user.username, 'LOGIN', null, null);
+                navigate(indexViewForRole(user.role), {});
+            });
+            app.querySelectorAll('[data-fill]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const [u, p] = btn.getAttribute('data-fill').split(',');
+                    app.querySelector('#login-username').value = u;
+                    app.querySelector('#login-password').value = p;
+                });
+            });
+        }
+
+        // admin: create user
+        const createUserForm = app.querySelector('#create-user-form');
+        if (createUserForm) {
+            createUserForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fd = new FormData(createUserForm);
+                const fullName = (fd.get('full_name') || '').toString().trim();
+                const username = (fd.get('username') || '').toString().trim();
+                const password = (fd.get('password') || '').toString();
+                const role = (fd.get('role') || '').toString();
+                const u = state.currentUser;
+
+                if (!['administrator', 'caseworker', 'intake_officer'].includes(role)) {
+                    setFlash('error', 'Invalid role selected.');
+                } else if (!fullName || !username || !password) {
+                    setFlash('error', 'All fields are required.');
+                } else if (password.length < 8) {
+                    setFlash('error', 'Password must be at least 8 characters.');
+                } else if (db.users.some(x => x.username === username)) {
+                    setFlash('error', "Could not create user (username may already be taken).");
+                } else {
+                    const newUser = { id: nextId.user++, fullName, username, password, role, isActive: true, createdAt: nowStamp() };
+                    db.users.push(newUser);
+                    logAction(u.id, u.username, 'CREATE_USER', 'users', newUser.id, `Created user '${username}' with role ${role}`);
+                    setFlash('success', `User '${username}' created.`);
+                }
+                render();
+            });
+        }
+
+        // admin: toggle user
+        app.querySelectorAll('[data-action="toggle-user"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = parseInt(btn.getAttribute('data-id'), 10);
+                const target = db.users.find(x => x.id === id);
+                if (!target) return;
+                target.isActive = !target.isActive;
+                const u = state.currentUser;
+                logAction(u.id, u.username, target.isActive ? 'REACTIVATE_USER' : 'DEACTIVATE_USER', 'users', id);
+                setFlash('success', 'User account updated.');
+                render();
+            });
+        });
+
+        // admin: audit filter
+        const auditForm = app.querySelector('#audit-filter-form');
+        if (auditForm) {
+            auditForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fd = new FormData(auditForm);
+                navigate('admin_audit', { filters: { user: fd.get('user') || '', from: fd.get('from') || '', to: fd.get('to') || '' } });
+            });
+        }
+
+        // intake: child search (debounced)
+        const searchBox = app.querySelector('#child-search');
+        if (searchBox) {
+            let debounceTimer;
+            searchBox.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const q = searchBox.value.trim();
+                debounceTimer = setTimeout(() => {
+                    state.params.childQuery = q;
+                    render();
+                    const el = app.querySelector('#child-search');
+                    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+                }, 300);
+            });
+        }
+        app.querySelectorAll('[data-action="pick-child"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.params.pickedChild = { id: btn.getAttribute('data-id'), name: btn.getAttribute('data-name'), ref: btn.getAttribute('data-ref') };
+                state.params.childQuery = '';
+                render();
+            });
+        });
+        const clearPicked = app.querySelector('[data-action="clear-picked-child"]');
+        if (clearPicked) clearPicked.addEventListener('click', () => { state.params.pickedChild = null; render(); });
+
+        // intake: register case
+        const caseForm = app.querySelector('#case-form');
+        if (caseForm) {
+            caseForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fd = new FormData(caseForm);
+                const u = state.currentUser;
+                const picked = state.params.pickedChild;
+                const category = fd.get('category_of_concern');
+                const dateReported = fd.get('date_reported') || today();
+                const summary = (fd.get('summary') || '').toString().trim();
+
+                let childId;
+                if (picked) {
+                    childId = parseInt(picked.id, 10);
+                    logAction(u.id, u.username, 'LINK_EXISTING_CHILD', 'children', childId);
+                } else {
+                    const fullName = (fd.get('child_full_name') || '').toString().trim();
+                    if (!fullName) {
+                        setFlash('error', 'Child full name is required when no existing record is selected.');
+                        render();
+                        return;
+                    }
+                    const dob = (fd.get('child_dob') || '').toString() || null;
+                    const guardianContact = (fd.get('guardian_contact') || '').toString().trim();
+                    const address = (fd.get('address') || '').toString().trim();
+                    const newChild = { id: nextId.child++, refCode: refCode('CH'), fullName, dob, guardianContact, address, createdAt: nowStamp() };
+                    db.children.push(newChild);
+                    childId = newChild.id;
+                    logAction(u.id, u.username, 'CREATE_CHILD_RECORD', 'children', childId, 'reference=' + newChild.refCode);
+                }
+
+                if (!CATEGORIES.includes(category)) {
+                    setFlash('error', 'A valid category of concern is required.');
+                    render();
+                    return;
+                }
+
+                const caseRef = refCode('CASE');
+                const newCase = {
+                    id: nextId.case++, refNumber: caseRef, childId, category, dateReported,
+                    reportedByUserId: u.id, assignedCaseworkerId: null, status: 'Reported', summary,
+                    createdAt: nowStamp(), updatedAt: nowStamp(),
+                };
+                db.cases.push(newCase);
+                logAction(u.id, u.username, 'CREATE_CASE', 'cases', newCase.id, `reference=${caseRef}, category=${category}`);
+                setFlash('success', `Case ${caseRef} registered successfully.`);
+                state.params.pickedChild = null;
+                state.params.childQuery = '';
+                render();
+            });
+        }
+
+        // case view: assign caseworker (admin)
+        const assignForm = app.querySelector('#assign-form');
+        if (assignForm) {
+            assignForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const caseId = parseInt(assignForm.getAttribute('data-case-id'), 10);
+                const c = db.cases.find(x => x.id === caseId);
+                const fd = new FormData(assignForm);
+                const cwId = fd.get('caseworker_id') ? parseInt(fd.get('caseworker_id'), 10) : null;
+                c.assignedCaseworkerId = cwId;
+                c.updatedAt = nowStamp();
+                const u = state.currentUser;
+                logAction(u.id, u.username, 'ASSIGN_CASE', 'cases', caseId, 'Assigned to user_id ' + (cwId ?? 'null'));
+                setFlash('success', 'Case assigned.');
+                navigate('case_view', { caseId });
+            });
+        }
+
+        // case view: status update
+        const statusForm = app.querySelector('#status-form');
+        if (statusForm) {
+            statusForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const caseId = parseInt(statusForm.getAttribute('data-case-id'), 10);
+                const c = db.cases.find(x => x.id === caseId);
+                if (!canEditCase(c)) { navigate('forbidden', {}); return; }
+                const fd = new FormData(statusForm);
+                const newStatus = fd.get('status');
+                if (!CASE_STATUSES.includes(newStatus)) { setFlash('error', 'Invalid status.'); render(); return; }
+                const oldStatus = c.status;
+                c.status = newStatus;
+                c.updatedAt = nowStamp();
+                const u = state.currentUser;
+                logAction(u.id, u.username, 'UPDATE_CASE_STATUS', 'cases', caseId, `${oldStatus} -> ${newStatus}`);
+                setFlash('success', 'Case status updated.');
+                navigate('case_view', { caseId });
+            });
+        }
+
+        // case view: add note
+        const noteForm = app.querySelector('#note-form');
+        if (noteForm) {
+            noteForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const caseId = parseInt(noteForm.getAttribute('data-case-id'), 10);
+                const c = db.cases.find(x => x.id === caseId);
+                if (!canEditCase(c)) { navigate('forbidden', {}); return; }
+                const fd = new FormData(noteForm);
+                const text = (fd.get('note_text') || '').toString().trim();
+                if (text) {
+                    const u = state.currentUser;
+                    const note = { id: nextId.note++, caseId, authorUserId: u.id, text, createdAt: nowStamp() };
+                    db.notes.push(note);
+                    logAction(u.id, u.username, 'ADD_CASE_NOTE', 'case_notes', note.id, 'case_id=' + caseId);
+                    setFlash('success', 'Note added.');
+                }
+                navigate('case_view', { caseId });
+            });
+        }
+
+        // case view: create referral
+        const referralForm = app.querySelector('#referral-form');
+        if (referralForm) {
+            referralForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const caseId = parseInt(referralForm.getAttribute('data-case-id'), 10);
+                const c = db.cases.find(x => x.id === caseId);
+                if (!canEditCase(c)) { navigate('forbidden', {}); return; }
+                const fd = new FormData(referralForm);
+                const referredTo = fd.get('referred_to');
+                const dateReferred = fd.get('date_referred') || today();
+                if (!REFERRAL_TARGETS.includes(referredTo)) { setFlash('error', 'Invalid referral target.'); navigate('case_view', { caseId }); return; }
+                const u = state.currentUser;
+                const referral = { id: nextId.referral++, caseId, referredTo, dateReferred, status: 'Pending', outcomeNotes: '', createdByUserId: u.id, createdAt: nowStamp() };
+                db.referrals.push(referral);
+                c.status = 'Referred';
+                c.updatedAt = nowStamp();
+                logAction(u.id, u.username, 'CREATE_REFERRAL', 'referrals', referral.id, `case_id=${caseId}, referred_to=${referredTo}`);
+                setFlash('success', 'Referral recorded and case status updated.');
+                navigate('case_view', { caseId });
+            });
+        }
+
+        // case view: update referral status
+        app.querySelectorAll('.referral-update-form').forEach(f => {
+            f.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const caseId = parseInt(f.getAttribute('data-case-id'), 10);
+                const referralId = parseInt(f.getAttribute('data-referral-id'), 10);
+                const c = db.cases.find(x => x.id === caseId);
+                if (!canEditCase(c)) { navigate('forbidden', {}); return; }
+                const fd = new FormData(f);
+                const newStatus = fd.get('referral_status');
+                const outcomeNotes = (fd.get('outcome_notes') || '').toString().trim();
+                if (!REFERRAL_STATUSES.includes(newStatus)) { setFlash('error', 'Invalid referral status.'); navigate('case_view', { caseId }); return; }
+                const referral = db.referrals.find(r => r.id === referralId && r.caseId === caseId);
+                if (referral) {
+                    referral.status = newStatus;
+                    referral.outcomeNotes = outcomeNotes;
+                    const u = state.currentUser;
+                    logAction(u.id, u.username, 'UPDATE_REFERRAL_STATUS', 'referrals', referralId, 'status=' + newStatus);
+                    setFlash('success', 'Referral updated.');
+                }
+                navigate('case_view', { caseId });
+            });
+        });
+    }
+
+    function indexViewForRole(role) {
+        if (role === 'administrator') return 'admin_dashboard';
+        if (role === 'caseworker') return 'case_list';
+        return 'intake_dashboard';
+    }
+
+    /* ============================================================
+       INIT
+       ============================================================ */
+    seed();
+    render();
+})();
+</script>
+</body>
+</html>
