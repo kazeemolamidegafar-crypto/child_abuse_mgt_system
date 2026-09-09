@@ -356,12 +356,19 @@ function clearDatabase() {
        AUDIT LOG  (append-only; mirrors log_action())
        ============================================================ */
     function logAction(userId, username, action, targetEntity, targetId, details) {
-        db.auditLogs.push({
-            id: nextId.log++, userId: userId ?? null, username: username ?? null, action,
-            targetEntity: targetEntity ?? null, targetId: targetId ?? null, details: details ?? null,
-            timestamp: nowStamp(),
-        });
-    }
+    db.auditLogs.push({
+        id: nextId.log++,
+        userId: userId ?? null,
+        username: username ?? null,
+        action,
+        targetEntity: targetEntity ?? null,
+        targetId: targetId ?? null,
+        details: details ?? null,
+        timestamp: nowStamp(),
+    });
+
+    saveDatabase();
+}
 
     /* ============================================================
        APP STATE
