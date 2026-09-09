@@ -514,9 +514,13 @@ function clearDatabase() {
             </div>
         </div>
         <div class="container">
-            <div class="disclaimer">This is a browser-only prototype rebuilt from a PHP/MySQL reference design. All data is
-            held in memory in this tab and is lost on reload — there is no real backend, encryption, or audit-log
-            immutability here. Do not enter real names or real case details.</div>
+            <div class="disclaimer">
+    This is a browser-only prototype rebuilt from a PHP/MySQL reference design.
+    Case and application data are stored persistently in this browser using localStorage
+    and survive page reloads. There is no real backend, server-side authentication,
+    encryption, multi-user synchronization, or audit-log immutability here.
+    Do not enter real names or real case details.
+</div>
             ${flash}
             ${innerHtml}
         </div>
