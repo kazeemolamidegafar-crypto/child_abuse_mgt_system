@@ -1142,8 +1142,19 @@ footer.appfoot { text-align:center; color: var(--muted); font-size:0.78rem; padd
     /* ============================================================
        INIT
        ============================================================ */
+   /*
+ * Load existing data first.
+ * Only create the demo records when this browser has no
+ * previously saved database.
+ */
+const hasSavedDatabase = loadDatabase();
+
+if (!hasSavedDatabase) {
     seed();
-    render();
+    saveDatabase();
+}
+
+render();
 })();
 </script>
 </body>
