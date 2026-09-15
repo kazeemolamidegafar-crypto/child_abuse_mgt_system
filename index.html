@@ -227,7 +227,6 @@
   let currentTab = 'report';
   let cases = [];
   let loading = true;
-  let storageUnavailable = false;
   let authError = '';
 
   function showToast(msg){
@@ -269,37 +268,95 @@
     return sum / c.ratings.length;
   }
 
-  async function loadCases(){
-    try{
-      const list = await window.storage.list('cases:', true);
-      const keys = (list && list.keys) ? list.keys : [];
-      const loaded = [];
-      for (const k of keys){
-        try{
-          const res = await window.storage.get(k, true);
-          if (res && res.value) loaded.push(JSON.parse(res.value));
-        }catch(e){ /* skip unreadable entry */ }
+  // In-memory fallback store, used only if window.storage is missing or
+  // throws at the moment of a call. Data in the fallback does NOT persist
+  // across reloads — usingFallback tracks whether we've had to use it.
+  const memoryStore = {};
+  let usingFallback = false;
+
+  function hasStorage(){
+    return typeof window.storage === 'object' && window.storage !== null
+      && typeof window.storage.get === 'function'
+      && typeof window.storage.set === 'function';
+  }
+
+  async function dGet(key, shared){
+    const fullKey = (shared ? 'shared:' : 'priv:') + key;
+    if (hasStorage()){
+      try{
+        const res = await window.storage.get(key, shared);
+        return res ? res.value : null;
+      }catch(e){
+        // real storage throws on missing keys too — check fallback, else null
       }
-      loaded.sort((a,b)=> b.createdAt - a.createdAt);
-      cases = loaded;
-    }catch(e){
-      cases = [];
+    } else {
+      usingFallback = true;
     }
+    return Object.prototype.hasOwnProperty.call(memoryStore, fullKey) ? memoryStore[fullKey] : null;
+  }
+
+  async function dSet(key, value, shared){
+    const fullKey = (shared ? 'shared:' : 'priv:') + key;
+    memoryStore[fullKey] = value; // always mirror to fallback so the session stays consistent
+    if (hasStorage()){
+      try{
+        await window.storage.set(key, value, shared);
+        return true;
+      }catch(e){
+        console.error('window.storage.set failed, using in-memory fallback:', e);
+        usingFallback = true;
+        return false;
+      }
+    }
+    usingFallback = true;
+    return false;
+  }
+
+  async function dList(prefix, shared){
+    const tag = shared ? 'shared:' : 'priv:';
+    let keys = [];
+    if (hasStorage()){
+      try{
+        const res = await window.storage.list(prefix, shared);
+        keys = (res && res.keys) ? res.keys : [];
+        return keys;
+      }catch(e){
+        console.error('window.storage.list failed, using in-memory fallback:', e);
+        usingFallback = true;
+      }
+    } else {
+      usingFallback = true;
+    }
+    // fallback: derive keys from memoryStore
+    return Object.keys(memoryStore)
+      .filter(k => k.startsWith(tag + prefix))
+      .map(k => k.slice(tag.length));
+  }
+
+  async function loadCases(){
+    const keys = await dList('cases:', true);
+    const loaded = [];
+    for (const k of keys){
+      try{
+        const val = await dGet(k, true);
+        if (val) loaded.push(JSON.parse(val));
+      }catch(e){ /* skip unreadable entry */ }
+    }
+    loaded.sort((a,b)=> b.createdAt - a.createdAt);
+    cases = loaded;
   }
 
   async function saveCase(c){
-    await window.storage.set('cases:' + c.id, JSON.stringify(c), true);
+    return await dSet('cases:' + c.id, JSON.stringify(c), true);
   }
 
   async function findUser(username){
-    try{
-      const res = await window.storage.get('users:' + username.toLowerCase(), true);
-      return res ? JSON.parse(res.value) : null;
-    }catch(e){ return null; }
+    const val = await dGet('users:' + username.toLowerCase(), true);
+    return val ? JSON.parse(val) : null;
   }
 
   async function saveUser(u){
-    await window.storage.set('users:' + u.username.toLowerCase(), JSON.stringify(u), true);
+    return await dSet('users:' + u.username.toLowerCase(), JSON.stringify(u), true);
   }
 
   // ---------- Render ----------
@@ -313,13 +370,12 @@
     app.appendChild(renderHeader());
     app.appendChild(renderNotice());
 
-    if (storageUnavailable){
+    if (usingFallback){
       const err = document.createElement('div');
       err.className = 'notice';
       err.style.borderLeftColor = 'var(--red)';
-      err.innerHTML = '<strong>Storage is unavailable.</strong> This browser/session did not provide the persistent storage API this app needs (window.storage), so accounts and cases cannot be saved. Try reloading, or opening this artifact in a full browser tab rather than an embedded preview.';
+      err.innerHTML = '<strong>Running without persistent storage.</strong> This browser session did not keep a connection to the storage API, so data is being held in memory only for now and will be lost on reload. The app still works normally for this session.';
       app.appendChild(err);
-      return;
     }
 
     if (!session){
@@ -449,37 +505,52 @@
   }
 
   async function onRegisterSubmit(){
-    const username = document.getElementById('reg-username').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const password2 = document.getElementById('reg-password2').value;
-
-    if (!username || username.length < 3){
-      authError = 'Username must be at least 3 characters.'; render(); return;
-    }
-    if (!/^[a-zA-Z0-9_\-]+$/.test(username)){
-      authError = 'Username can only contain letters, numbers, - and _.'; render(); return;
-    }
-    if (!password || password.length < 6){
-      authError = 'Password must be at least 6 characters.'; render(); return;
-    }
-    if (password !== password2){
-      authError = 'Passwords do not match.'; render(); return;
-    }
+    console.log('Register clicked');
     try{
+      const usernameEl = document.getElementById('reg-username');
+      const passwordEl = document.getElementById('reg-password');
+      const password2El = document.getElementById('reg-password2');
+      if (!usernameEl || !passwordEl || !password2El){
+        authError = 'Form did not load correctly. Please reload.';
+        render();
+        return;
+      }
+      const username = usernameEl.value.trim();
+      const password = passwordEl.value;
+      const password2 = password2El.value;
+
+      if (!username || username.length < 3){
+        authError = 'Username must be at least 3 characters.'; render(); return;
+      }
+      if (!/^[a-zA-Z0-9_\-]+$/.test(username)){
+        authError = 'Username can only contain letters, numbers, - and _.'; render(); return;
+      }
+      if (!password || password.length < 6){
+        authError = 'Password must be at least 6 characters.'; render(); return;
+      }
+      if (password !== password2){
+        authError = 'Passwords do not match.'; render(); return;
+      }
+
+      console.log('Checking for existing user:', username);
       const existing = await findUser(username);
+      console.log('Existing user check result:', existing);
       if (existing){
         authError = 'That username is already taken.'; render(); return;
       }
       const passwordHash = await sha256(password);
+      console.log('Password hashed, saving user...');
       const user = { username, passwordHash, createdAt: Date.now() };
-      await saveUser(user);
+      const saveResult = await saveUser(user);
+      console.log('Save result:', saveResult);
       session = { username: user.username };
       authError = '';
       currentTab = 'report';
       render();
       showToast('Account created. Welcome, ' + user.username + '.');
     }catch(e){
-      authError = 'Something went wrong creating the account: ' + (e && e.message ? e.message : e);
+      console.error('Registration failed:', e);
+      authError = 'Something went wrong creating the account: ' + (e && e.message ? e.message : String(e));
       render();
     }
   }
@@ -652,12 +723,6 @@
   async function init(){
     loading = true;
     render();
-    if (!window.storage || typeof window.storage.get !== 'function'){
-      storageUnavailable = true;
-      loading = false;
-      render();
-      return;
-    }
     try{
       await loadCases();
     }catch(e){
