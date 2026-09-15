@@ -268,77 +268,68 @@
     return sum / c.ratings.length;
   }
 
-  // In-memory fallback store, used only if window.storage is missing or
-  // throws at the moment of a call. Data in the fallback does NOT persist
-  // across reloads — usingFallback tracks whether we've had to use it.
-  const memoryStore = {};
-  let usingFallback = false;
+  // True offline storage: the browser's own localStorage. No network calls,
+  // no external bridge — this only works when the page is opened as a
+  // standalone file in a real browser tab (not inside a sandboxed preview,
+  // which blocks localStorage by design).
+  const LS_PREFIX = 'cpcr_v1_';
+  let localStorageUnavailable = false;
 
-  function hasStorage(){
-    return typeof window.storage === 'object' && window.storage !== null
-      && typeof window.storage.get === 'function'
-      && typeof window.storage.set === 'function';
+  function lsAvailable(){
+    try{
+      const testKey = LS_PREFIX + '__test__';
+      localStorage.setItem(testKey, '1');
+      localStorage.removeItem(testKey);
+      return true;
+    }catch(e){
+      return false;
+    }
   }
 
-  async function dGet(key, shared){
-    const fullKey = (shared ? 'shared:' : 'priv:') + key;
-    if (hasStorage()){
-      try{
-        const res = await window.storage.get(key, shared);
-        return res ? res.value : null;
-      }catch(e){
-        // real storage throws on missing keys too — check fallback, else null
-      }
-    } else {
-      usingFallback = true;
+  async function dGet(key){
+    try{
+      return localStorage.getItem(LS_PREFIX + key);
+    }catch(e){
+      console.error('localStorage.getItem failed:', e);
+      localStorageUnavailable = true;
+      return null;
     }
-    return Object.prototype.hasOwnProperty.call(memoryStore, fullKey) ? memoryStore[fullKey] : null;
   }
 
-  async function dSet(key, value, shared){
-    const fullKey = (shared ? 'shared:' : 'priv:') + key;
-    memoryStore[fullKey] = value; // always mirror to fallback so the session stays consistent
-    if (hasStorage()){
-      try{
-        await window.storage.set(key, value, shared);
-        return true;
-      }catch(e){
-        console.error('window.storage.set failed, using in-memory fallback:', e);
-        usingFallback = true;
-        return false;
-      }
+  async function dSet(key, value){
+    try{
+      localStorage.setItem(LS_PREFIX + key, value);
+      return true;
+    }catch(e){
+      console.error('localStorage.setItem failed:', e);
+      localStorageUnavailable = true;
+      return false;
     }
-    usingFallback = true;
-    return false;
   }
 
-  async function dList(prefix, shared){
-    const tag = shared ? 'shared:' : 'priv:';
-    let keys = [];
-    if (hasStorage()){
-      try{
-        const res = await window.storage.list(prefix, shared);
-        keys = (res && res.keys) ? res.keys : [];
-        return keys;
-      }catch(e){
-        console.error('window.storage.list failed, using in-memory fallback:', e);
-        usingFallback = true;
+  async function dListKeys(prefix){
+    try{
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++){
+        const k = localStorage.key(i);
+        if (k && k.indexOf(LS_PREFIX + prefix) === 0){
+          keys.push(k.slice(LS_PREFIX.length));
+        }
       }
-    } else {
-      usingFallback = true;
+      return keys;
+    }catch(e){
+      console.error('localStorage enumeration failed:', e);
+      localStorageUnavailable = true;
+      return [];
     }
-    // fallback: derive keys from memoryStore
-    return Object.keys(memoryStore)
-      .filter(k => k.startsWith(tag + prefix))
-      .map(k => k.slice(tag.length));
   }
 
   async function loadCases(){
-    const keys = await dList('cases:', true);
+    const keys = await dListKeys('cases:');
     const loaded = [];
     for (const k of keys){
       try{
-        const val = await dGet(k, true);
+        const val = await dGet(k);
         if (val) loaded.push(JSON.parse(val));
       }catch(e){ /* skip unreadable entry */ }
     }
@@ -347,16 +338,16 @@
   }
 
   async function saveCase(c){
-    return await dSet('cases:' + c.id, JSON.stringify(c), true);
+    return await dSet('cases:' + c.id, JSON.stringify(c));
   }
 
   async function findUser(username){
-    const val = await dGet('users:' + username.toLowerCase(), true);
+    const val = await dGet('users:' + username.toLowerCase());
     return val ? JSON.parse(val) : null;
   }
 
   async function saveUser(u){
-    return await dSet('users:' + u.username.toLowerCase(), JSON.stringify(u), true);
+    return await dSet('users:' + u.username.toLowerCase(), JSON.stringify(u));
   }
 
   // ---------- Render ----------
@@ -370,11 +361,11 @@
     app.appendChild(renderHeader());
     app.appendChild(renderNotice());
 
-    if (usingFallback){
+    if (localStorageUnavailable){
       const err = document.createElement('div');
       err.className = 'notice';
       err.style.borderLeftColor = 'var(--red)';
-      err.innerHTML = '<strong>Running without persistent storage.</strong> This browser session did not keep a connection to the storage API, so data is being held in memory only for now and will be lost on reload. The app still works normally for this session.';
+      err.innerHTML = '<strong>This browser is blocking local storage.</strong> That usually means private/incognito browsing, or a strict cookie/storage setting. Data entered now will not be saved. Try a normal browser window, or check your browser\'s site data settings for this page.';
       app.appendChild(err);
     }
 
@@ -416,7 +407,7 @@
   function renderNotice(){
     const div = document.createElement('div');
     div.className = 'notice';
-    div.innerHTML = `<strong>This is a demonstration tool, not an emergency service.</strong> If a child is in immediate danger, contact your local emergency number right away. In the US, you can also reach the Childhelp National Child Abuse Hotline at 1-800-422-4453, available 24/7. Data entered here is stored only in this browser and is not sent to any government agency or database.`;
+    div.innerHTML = `<strong>This is a demonstration tool, not an emergency service.</strong> If a child is in immediate danger, contact your local emergency number right away. In the US, you can also reach the Childhelp National Child Abuse Hotline at 1-800-422-4453, available 24/7. Data entered here is stored only in this browser's local storage on this device — it is not sent anywhere, and it will not be visible from a different browser or device.`;
     return div;
   }
 
@@ -723,6 +714,9 @@
   async function init(){
     loading = true;
     render();
+    if (!lsAvailable()){
+      localStorageUnavailable = true;
+    }
     try{
       await loadCases();
     }catch(e){
