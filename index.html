@@ -226,10 +226,20 @@
     setTimeout(()=> toastEl.classList.remove('show'), 2200);
   }
 
+  // Self-contained hash (no dependency on crypto.subtle, which is not
+  // reliably available inside sandboxed artifact iframes). This is NOT
+  // cryptographically secure — fine for this demo, not for a real system.
   async function sha256(text){
-    const enc = new TextEncoder().encode(text);
-    const buf = await crypto.subtle.digest('SHA-256', enc);
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0;
+    for (let i = 0; i < text.length; i++){
+      const ch = text.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    const combined = (h1 >>> 0).toString(16).padStart(8,'0') + (h2 >>> 0).toString(16).padStart(8,'0');
+    return combined;
   }
 
   function escapeHtml(s){
@@ -395,23 +405,28 @@
       render();
       return;
     }
-    const user = await findUser(username);
-    if (!user){
-      authError = 'No account found with that username.';
+    try{
+      const user = await findUser(username);
+      if (!user){
+        authError = 'No account found with that username.';
+        render();
+        return;
+      }
+      const hash = await sha256(password);
+      if (hash !== user.passwordHash){
+        authError = 'Incorrect password.';
+        render();
+        return;
+      }
+      session = { username: user.username };
+      authError = '';
+      currentTab = 'report';
       render();
-      return;
-    }
-    const hash = await sha256(password);
-    if (hash !== user.passwordHash){
-      authError = 'Incorrect password.';
+      showToast('Logged in as ' + user.username);
+    }catch(e){
+      authError = 'Something went wrong logging in: ' + (e && e.message ? e.message : e);
       render();
-      return;
     }
-    session = { username: user.username };
-    authError = '';
-    currentTab = 'report';
-    render();
-    showToast('Logged in as ' + user.username);
   }
 
   async function onRegisterSubmit(){
@@ -431,18 +446,23 @@
     if (password !== password2){
       authError = 'Passwords do not match.'; render(); return;
     }
-    const existing = await findUser(username);
-    if (existing){
-      authError = 'That username is already taken.'; render(); return;
+    try{
+      const existing = await findUser(username);
+      if (existing){
+        authError = 'That username is already taken.'; render(); return;
+      }
+      const passwordHash = await sha256(password);
+      const user = { username, passwordHash, createdAt: Date.now() };
+      await saveUser(user);
+      session = { username: user.username };
+      authError = '';
+      currentTab = 'report';
+      render();
+      showToast('Account created. Welcome, ' + user.username + '.');
+    }catch(e){
+      authError = 'Something went wrong creating the account: ' + (e && e.message ? e.message : e);
+      render();
     }
-    const passwordHash = await sha256(password);
-    const user = { username, passwordHash, createdAt: Date.now() };
-    await saveUser(user);
-    session = { username: user.username };
-    authError = '';
-    currentTab = 'report';
-    render();
-    showToast('Account created. Welcome, ' + user.username + '.');
   }
 
   // ---------- Tabs ----------
@@ -472,7 +492,7 @@
     panel.style.maxWidth = '560px';
     panel.innerHTML = `
       <label for="f-title">Case title</label>
-      <input id="f-title" type="text" placeholder="Short summary, e.g. \\"Unfollowed-up referral, Lincoln Elementary\\"" />
+      <input id="f-title" type="text" placeholder="Short summary, e.g. Unfollowed-up referral, Lincoln Elementary" />
 
       <label for="f-desc">What happened, and what needs attention</label>
       <textarea id="f-desc" rows="5" placeholder="Describe the situation and what response you expect from the responsible agency."></textarea>
