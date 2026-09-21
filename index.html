@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Child Safety Case System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F3F6F8; --surface:#FFFFFF; --surface-2:#EAF0F4; --ink:#14263A; --muted:#566878; --line:#D5DEE6;
@@ -35,7 +32,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 *,*::before,*::after{box-sizing:inherit}
 body{
   margin:0;min-height:100%;background:var(--bg);color:var(--ink);
-  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   font-size:1rem;line-height:1.55;
 }
 h1,h2,h3{line-height:1.2;margin:0;font-weight:700}
@@ -203,6 +200,42 @@ var store = {
   }
 };
 
+/* ---------- second copy in IndexedDB (restores data if localStorage was wiped) ---------- */
+var dbp = null;
+function timeout(ms){ return new Promise(function(r){ setTimeout(function(){ r(undefined); }, ms); }); }
+function db(){
+  if(!dbp) dbp = new Promise(function(res){
+    try {
+      var r = indexedDB.open('cpcr2', 1);
+      r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+      r.onsuccess = function(){ res(r.result); };
+      r.onerror = function(){ res(null); };
+    } catch(e){ res(null); }
+  });
+  return dbp;
+}
+var idb = {
+  get: function(k){
+    return Promise.race([db().then(function(d){
+      if(!d) return undefined;
+      return new Promise(function(res){
+        try { var q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ res(undefined); }; }
+        catch(e){ res(undefined); }
+      });
+    }), timeout(1500)]);
+  },
+  set: function(k, v){
+    return Promise.race([db().then(function(d){
+      if(!d) return false;
+      return new Promise(function(res){
+        try { var t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = function(){ res(true); }; t.onerror = function(){ res(false); }; }
+        catch(e){ res(false); }
+      });
+    }), timeout(1500)]);
+  }
+};
+function mirror(){ idb.set('snapshot', { users: users, cases: cases, session: store.get('session', null), ts: Date.now() }); }
+
 /* ---------- state ---------- */
 var users = [], cases = [], me = null;
 var ui = { view:'cases', scope:'mine', state:'all', q:'', caseId:null, from:'cases', auth:'login', confirmClose:false, confirmReset:false };
@@ -214,6 +247,7 @@ function load(){ users = store.get('users', []); cases = store.get('cases', []);
 function save(){
   var a = store.set('users', users), b = store.set('cases', cases);
   if(!(a && b)) persistent = false;
+  mirror();
 }
 
 /* ---------- helpers ---------- */
@@ -268,7 +302,15 @@ function go(view, extra){
 async function boot(){
   try { localStorage.setItem(P + 'probe', '1'); localStorage.removeItem(P + 'probe'); persistent = true; }
   catch(e){ persistent = false; }
+  try { if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){}); } catch(e){}
   load();
+  if(!users.length){
+    var snap = await idb.get('snapshot');
+    if(snap && snap.users && snap.users.length){
+      users = snap.users; cases = snap.cases || []; save();
+      if(snap.session) store.set('session', snap.session);
+    }
+  }
   if(!users.length){
     users.push({ id: uid(), name:'System Admin', username:'admin', pass: await hash('admin','admin123'), role:'admin', createdAt: Date.now() });
     save();
@@ -299,7 +341,7 @@ function render(){
   else if(ui.view === 'case') body = caseView();
   else body = casesView();
   app.innerHTML = topbar() + (persistent ? '' :
-    '<div class="wrap" style="padding-top:14px"><div class="banner">This browser is blocking storage, so changes will be lost when you close this tab.</div></div>') + body;
+    '<div class="wrap" style="padding-top:14px"><div class="banner">This browser is blocking storage for this page, so your data will be lost on reload. This happens in private windows, previews and some in-app viewers. Open the file in a normal browser window, or use Export backup on the Staff accounts page.</div></div>') + body;
   if(ui.view === 'cases') renderList();
 }
 
@@ -551,6 +593,10 @@ function staffView(){
       return '<div class="person"><div><b>' + esc(u.name) + '</b><div class="muted small">@' + esc(u.username) + ', ' + open + ' open case' + (open === 1 ? '' : 's') + '</div></div>' +
         '<span class="role role-' + u.role + '">' + ROLE[u.role] + '</span></div>';
     }).join('') + '</div><p class="muted small">' + members + ' registered regular user' + (members === 1 ? '' : 's') + '.</p></section></div>' +
+    '<section class="card"><h2>Backup and restore</h2><p class="muted">' + (persistent ? 'Your data is saved in this browser and stays after you reload or close it.' : 'This browser is blocking storage for this page, so data is lost on reload. Export a backup before you close it.') + '</p>' +
+    '<div class="btnrow"><button class="btn primary" data-action="export">Export backup</button></div>' +
+    '<div><label for="imp" style="margin-top:0">Import a backup (replaces everything here)</label><input type="file" id="imp" accept="application/json,.json"></div>' +
+    '<p class="hint">A backup holds all accounts and cases. Keep the file private.</p></section>' +
     '<section class="card"><h2>Demo data</h2><p class="muted">Clear every account and case saved in this browser and start again with only the default admin.</p>' +
     '<div class="btnrow">' + (ui.confirmReset ?
       '<button class="btn danger" data-action="reset-confirmed">Yes, erase everything</button><button class="btn" data-action="cancelreset">Cancel</button>' :
@@ -597,6 +643,42 @@ function doAssign(c){
   save(); render(); toast('Case assigned to ' + target.name + '.');
 }
 
+function exportData(){
+  var data = { app:'cpcr2', version:1, exportedAt: new Date().toISOString(), users: users, cases: cases };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'case-system-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+  toast('Backup downloaded.');
+}
+function importData(file){
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var d = JSON.parse(r.result);
+      if(!d || d.app !== 'cpcr2' || !Array.isArray(d.users) || !Array.isArray(d.cases)) throw new Error('bad');
+      var okR = { user:1, officer:1, admin:1 };
+      var us = d.users.filter(function(u){ return u && u.id && u.username && u.pass && okR[u.role]; });
+      if(!us.some(function(u){ return u.role === 'admin'; })) throw new Error('no admin');
+      var cs = d.cases.filter(function(c){ return c && c.id && c.title; }).map(function(c){
+        c.history = Array.isArray(c.history) ? c.history : [];
+        c.logs = Array.isArray(c.logs) ? c.logs : [];
+        c.ratings = (c.ratings && typeof c.ratings === 'object') ? c.ratings : {};
+        if(!SLUG[c.status]) c.status = 'Reported';
+        return c;
+      });
+      var myId = me && me.id;
+      users = us; cases = cs; save();
+      me = userById(myId);
+      if(!me){ store.remove('session'); mirror(); ui.auth = 'login'; render(); toast('Backup restored. Please log in again.'); return; }
+      resetUi(); ui.view = 'staff'; render(); toast('Backup restored.');
+    } catch(e){ toast('That file is not a valid backup.'); }
+  };
+  r.readAsText(file);
+}
+
 /* ---------- events ---------- */
 document.addEventListener('click', async function(e){
   var t = e.target.closest('[data-action]'); if(!t) return;
@@ -604,7 +686,7 @@ document.addEventListener('click', async function(e){
   var c = ui.caseId ? cases.filter(function(x){ return x.id === ui.caseId; })[0] : null;
   if(a === 'authtab'){ ui.auth = t.getAttribute('data-v'); render(); }
   else if(a === 'nav'){ go(t.getAttribute('data-v'), { caseId: null }); }
-  else if(a === 'logout'){ store.remove('session'); me = null; ui.auth = 'login'; render(); window.scrollTo(0,0); }
+  else if(a === 'logout'){ store.remove('session'); mirror(); me = null; ui.auth = 'login'; render(); window.scrollTo(0,0); }
   else if(a === 'scope'){ ui.scope = t.getAttribute('data-v'); ui.state = 'all'; render(); }
   else if(a === 'filter'){ ui.state = t.getAttribute('data-v'); renderList(); }
   else if(a === 'open'){ go('case', { caseId: t.getAttribute('data-id'), from: t.getAttribute('data-from') || 'cases' }); }
@@ -623,12 +705,17 @@ document.addEventListener('click', async function(e){
     if(c.status !== 'Closed' || c.assigneeId === me.id || isNaN(n) || n < 0 || n > 10) return;
     c.ratings = c.ratings || {}; c.ratings[me.id] = n; save(); render(); toast('Thanks, you rated this case ' + n + ' out of 10.');
   }
+  else if(a === 'export' && me.role === 'admin'){ exportData(); }
   else if(a === 'reset'){ ui.confirmReset = true; render(); }
   else if(a === 'cancelreset'){ ui.confirmReset = false; render(); }
   else if(a === 'reset-confirmed' && me.role === 'admin'){
     ['users','cases','session'].forEach(function(k){ store.remove(k); });
-    users = []; cases = []; me = null; ui.auth = 'login'; await boot(); toast('Demo data erased.');
+    users = []; cases = []; me = null; ui.auth = 'login'; await idb.set('snapshot', null); await boot(); toast('Demo data erased.');
   }
+});
+
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id === 'imp' && me && me.role === 'admin' && e.target.files && e.target.files[0]){ importData(e.target.files[0]); }
 });
 
 document.addEventListener('input', function(e){
@@ -647,7 +734,7 @@ document.addEventListener('submit', async function(e){
     var rec = users.filter(function(x){ return x.username === u; })[0];
     var h = await hash(u, f.password.value);
     if(!rec || rec.pass !== h){ fail('autherr', 'The username or password is wrong.'); return; }
-    me = rec; store.set('session', me.id); resetUi(); render(); window.scrollTo(0,0);
+    me = rec; store.set('session', me.id); mirror(); resetUi(); render(); window.scrollTo(0,0);
   }
   else if(kind === 'register'){
     var name = f.name.value.trim(), un = f.username.value.trim().toLowerCase(), pw = f.password.value;
@@ -657,7 +744,7 @@ document.addEventListener('submit', async function(e){
     load();
     if(users.some(function(x){ return x.username === un; })){ fail('autherr', 'That username is taken. Choose another.'); return; }
     var nu = { id: uid(), name: name, username: un, pass: await hash(un, pw), role: 'user', createdAt: Date.now() };
-    users.push(nu); save(); me = nu; store.set('session', me.id); resetUi(); render(); toast('Welcome, ' + name + '.');
+    users.push(nu); save(); me = nu; store.set('session', me.id); mirror(); resetUi(); render(); toast('Welcome, ' + name + '.');
   }
   else if(kind === 'report'){
     var title = f.title.value.trim(), child = f.child.value.trim(), desc = f.desc.value.trim();
