@@ -1,732 +1,690 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Child Protection Case Registry</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Child Safety Case System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink: #1C2B2A;
-    --paper: #F5F6F3;
-    --paper-raised: #FFFFFF;
-    --line: #D8DCD6;
-    --navy: #1E3A4C;
-    --navy-deep: #142833;
-    --gold: #B8862E;
-    --red: #A23E2E;
-    --amber: #B8862E;
-    --green: #3C6E4F;
-    --muted: #5C6B68;
+:root{
+  --bg:#F3F6F8; --surface:#FFFFFF; --surface-2:#EAF0F4; --ink:#14263A; --muted:#566878; --line:#D5DEE6;
+  --primary:#0F6B6B; --primary-ink:#FFFFFF; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#B23A3A;
+  --s-reported:#2F62A0; --s-review:#9A6412; --s-assigned:#0F6B6B; --s-hold:#6F4FA0; --s-closed:#2A7748;
+  --r-low:#B23A3A; --r-mid:#9A6412; --r-high:#2A7748;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A26; --surface:#15263A; --surface-2:#1B3049; --ink:#E6EEF5; --muted:#9DB0C2; --line:#28405A;
+    --primary:#3FB6B0; --primary-ink:#06222A; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#F08080;
+    --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088;
+    --r-low:#F08080; --r-mid:#E0A94A; --r-high:#63C088;
   }
-  *{ box-sizing: border-box; }
-  html,body{ margin:0; padding:0; }
-  body{
-    background: var(--paper);
-    color: var(--ink);
-    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-    line-height: 1.5;
-  }
-  .sans{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
-  #app{ max-width: 760px; margin: 0 auto; padding: 0 20px 80px; }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A26; --surface:#15263A; --surface-2:#1B3049; --ink:#E6EEF5; --muted:#9DB0C2; --line:#28405A;
+  --primary:#3FB6B0; --primary-ink:#06222A; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#F08080;
+  --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088;
+  --r-low:#F08080; --r-mid:#E0A94A; --r-high:#63C088;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:1rem;line-height:1.55;
+}
+h1,h2,h3{line-height:1.2;margin:0;font-weight:700}
+h1{font-size:1.9rem}
+h2{font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.wrap{max-width:980px;margin:0 auto;padding-left:20px;padding-right:20px}
+.page{padding-top:28px;padding-bottom:64px;display:grid;gap:20px}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 
-  header.site{
-    padding: 28px 0 18px;
-    border-bottom: 2px solid var(--navy);
-    margin-bottom: 22px;
-  }
-  header.site .top-row{
-    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
-  }
-  header.site h1{
-    font-size: 26px;
-    font-weight: 600;
-    margin: 0 0 4px;
-    color: var(--navy-deep);
-    letter-spacing: 0.2px;
-  }
-  header.site p.tagline{
-    margin:0; color: var(--muted); font-size: 14.5px; max-width: 46ch;
-  }
-  .session-box{ text-align:right; font-family:inherit; }
-  .session-box .who{ font-size: 14px; color: var(--navy-deep); font-weight:600; }
-  .session-box button{ margin-top:6px; }
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;padding-bottom:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.who .name{font-weight:700}
+.role{font-size:.8rem;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.role-admin{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.role-officer{background:color-mix(in srgb,var(--primary) 16%,transparent);border-color:color-mix(in srgb,var(--primary) 45%,transparent)}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{font:inherit;font-weight:700;background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;color:var(--muted);cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.nav button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--primary)}
+.count{background:var(--accent);color:var(--accent-ink);font-size:.78rem;font-weight:700;border-radius:999px;padding:0 8px;min-width:22px;text-align:center}
 
-  .notice{
-    background: #FBF6EA;
-    border: 1px solid #E4D6AD;
-    border-left: 4px solid var(--gold);
-    padding: 12px 16px;
-    font-size: 13.5px;
-    color: #4A3C1A;
-    margin-bottom: 26px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  }
-  .notice strong{ color: #3A2E12; }
+/* controls */
+.btn{font:inherit;font-weight:700;padding:.55rem 1rem;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 50%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.sm{min-height:36px;padding:.25rem .75rem;font-size:.9rem}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+label{display:block;font-weight:700;margin:14px 0 6px}
+input,select,textarea{
+  font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--muted);border-radius:8px;
+  padding:.6rem .75rem;width:100%;min-height:44px;
+}
+textarea{resize:vertical;min-height:88px}
+.inline{display:flex;gap:10px;flex-wrap:wrap}
+.inline select,.inline input{flex:1 1 200px;width:auto}
+.err{color:var(--danger);font-weight:700;min-height:1.4em;margin-top:10px}
+.hint{font-size:.875rem;color:var(--muted);margin-top:6px}
 
-  button{
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    cursor: pointer;
-    border: 1px solid var(--navy);
-    background: var(--navy);
-    color: #fff;
-    padding: 9px 16px;
-    font-size: 14px;
-    border-radius: 3px;
-    transition: background 0.15s ease;
-  }
-  button:hover{ background: var(--navy-deep); }
-  button.ghost{
-    background: transparent; color: var(--navy); border: 1px solid var(--line);
-  }
-  button.ghost:hover{ background: #EDEFEA; }
-  button.small{ padding: 5px 10px; font-size: 12.5px; }
-  button:disabled{ opacity:0.5; cursor:not-allowed; }
+/* surfaces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px;align-content:start}
+.pagehead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.banner{background:color-mix(in srgb,var(--accent) 22%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 60%,var(--line));border-radius:10px;padding:10px 14px;font-size:.92rem}
+.empty{border:1px dashed var(--muted);border-radius:12px;padding:28px 20px;text-align:center;color:var(--muted)}
 
-  input, textarea, select{
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    width: 100%;
-    padding: 9px 11px;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    font-size: 14.5px;
-    background: var(--paper-raised);
-    color: var(--ink);
-  }
-  input:focus, textarea:focus, select:focus{
-    outline: 2px solid var(--navy); outline-offset: 1px;
-  }
-  label{
-    display:block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 12.5px; text-transform: none; color: var(--muted); margin-bottom: 4px; margin-top: 14px;
-  }
-  label:first-child{ margin-top:0; }
-  .field-error{ color: var(--red); font-size: 12.5px; margin-top: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+/* pills and status */
+.pill{display:inline-block;font-size:.85rem;font-weight:700;padding:2px 12px;border-radius:999px;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 42%,transparent)}
+.st-reported{--c:var(--s-reported)}
+.st-review{--c:var(--s-review)}
+.st-assigned{--c:var(--s-assigned)}
+.st-hold{--c:var(--s-hold)}
+.st-closed{--c:var(--s-closed)}
 
-  .auth-tabs{ display:flex; gap: 4px; margin-bottom: 18px; }
-  .auth-tabs button{
-    background: transparent; color: var(--muted); border: none; border-bottom: 2px solid transparent;
-    border-radius: 0; padding: 8px 4px; margin-right: 18px; font-size: 15px;
-  }
-  .auth-tabs button.active{ color: var(--navy-deep); border-bottom-color: var(--gold); font-weight: 600; }
-  .auth-tabs button:hover{ background: transparent; color: var(--navy-deep); }
+/* segmented + chips */
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--muted);padding:.4rem .9rem;border-radius:7px;cursor:pointer;min-height:38px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:.3rem .85rem;cursor:pointer;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 
-  .panel{
-    background: var(--paper-raised);
-    border: 1px solid var(--line);
-    padding: 22px;
-    max-width: 420px;
-  }
+/* case rows */
+.list{display:grid;gap:10px}
+.row{font:inherit;text-align:left;color:inherit;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center}
+.row:hover{border-color:var(--primary)}
+.row-main{display:grid;gap:2px;min-width:0}
+.row-title{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.row-meta{color:var(--muted);font-size:.9rem}
+.row-side{display:grid;gap:6px;justify-items:end;flex:none}
 
-  nav.tabs{
-    display:flex; gap: 22px; margin-bottom: 22px; border-bottom: 1px solid var(--line);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  }
-  nav.tabs button{
-    background:transparent; color: var(--muted); border:none; border-bottom: 2px solid transparent;
-    border-radius:0; padding: 10px 2px; font-size: 14.5px;
-  }
-  nav.tabs button.active{ color: var(--navy-deep); border-bottom-color: var(--navy); font-weight:600; }
-  nav.tabs button:hover{ background:transparent; color:var(--navy-deep); }
+/* stepper */
+.steps{list-style:none;margin:0;padding:0;display:flex}
+.steps li{flex:1;display:grid;justify-items:center;gap:6px;text-align:center;font-size:.85rem;color:var(--muted);position:relative}
+.steps li::before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0}
+.steps li:first-child::before{display:none}
+.steps .dot{width:24px;height:24px;border-radius:50%;background:var(--surface);border:3px solid var(--line);z-index:1}
+.steps li.done{color:var(--ink)}
+.steps li.done .dot{background:var(--primary);border-color:var(--primary)}
+.steps li.done::before,.steps li.cur::before{background:var(--primary)}
+.steps li.cur{color:var(--ink);font-weight:700}
+.steps li.cur .dot{border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 25%,transparent)}
+.steps li.paused .dot{border-color:var(--s-hold);box-shadow:0 0 0 4px color-mix(in srgb,var(--s-hold) 25%,transparent)}
 
-  h2.section-title{
-    font-size: 19px; color: var(--navy-deep); margin: 0 0 16px; font-weight:600;
-  }
+/* details */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.fact dt{font-size:.85rem;color:var(--muted)}
+.fact dd{margin:0;font-weight:700;overflow-wrap:anywhere}
+.desc{white-space:pre-wrap;overflow-wrap:anywhere}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.timeline li{border-left:3px solid var(--line);padding-left:12px}
+.entry{border-left:3px solid var(--primary);padding:2px 0 2px 12px}
+.entry .meta{font-size:.85rem;color:var(--muted)}
+.entry p{white-space:pre-wrap;overflow-wrap:anywhere}
 
-  .case-list{ list-style:none; margin:0; padding:0; }
-  .case-item{
-    border: 1px solid var(--line);
-    border-left: 5px solid var(--muted);
-    background: var(--paper-raised);
-    padding: 16px 18px;
-    margin-bottom: 14px;
-  }
-  .case-item.status-open{ border-left-color: var(--red); }
-  .case-item.status-review{ border-left-color: var(--gold); }
-  .case-item.status-resolved{ border-left-color: var(--green); }
+/* rating */
+.rate{font-weight:700;font-size:1.05rem;color:var(--rc)}
+.rate small{font-size:.75em;color:var(--muted)}
+.rate-low{--rc:var(--r-low)} .rate-mid{--rc:var(--r-mid)} .rate-high{--rc:var(--r-high)}
+.bigrate{font-size:2.4rem;font-weight:700;line-height:1;color:var(--rc)}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.scale button{font:inherit;font-weight:700;width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.scale button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.scale button:hover{border-color:var(--primary)}
 
-  .case-top{ display:flex; justify-content:space-between; gap: 14px; align-items:flex-start; }
-  .case-title{ font-size: 17px; font-weight: 600; color: var(--ink); margin: 0 0 4px; }
-  .case-meta{
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 12.5px; color: var(--muted);
-  }
-  .status-pill{
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 11.5px; padding: 3px 9px; border-radius: 10px; white-space:nowrap; font-weight:600;
-  }
-  .status-open .status-pill{ background:#F4E1DB; color:#7A2E20; }
-  .status-review .status-pill{ background:#F3E9D2; color:#7A5C15; }
-  .status-resolved .status-pill{ background:#DCEADF; color:#28502F; }
+/* auth */
+.auth{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center;min-height:calc(100vh - 40px);padding-top:32px;padding-bottom:40px}
+.auth h1{font-size:2.4rem;margin:18px 0 12px}
+.auth .lead{font-size:1.1rem;max-width:34ch}
+.tabs{display:flex;gap:6px;margin-bottom:6px}
 
-  .case-desc{ margin: 10px 0 12px; font-size: 14.5px; color: #333; }
-  .case-official{ font-size: 13.5px; color: var(--navy-deep); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; margin-bottom: 10px; }
-  .case-official b{ font-weight:600; }
+/* staff list */
+.people{display:grid;gap:8px}
+.person{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
 
-  .rating-row{
-    display:flex; align-items:center; justify-content:space-between; gap: 14px;
-    border-top: 1px solid var(--line); padding-top: 12px; margin-top: 6px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  }
-  .rating-score{
-    display:flex; align-items:baseline; gap:6px;
-  }
-  .rating-score .num{ font-size: 22px; font-weight:700; }
-  .rating-score .of{ font-size: 12px; color: var(--muted); }
-  .rating-score .count{ font-size: 11.5px; color: var(--muted); }
-  .rating-red .num{ color: var(--red); }
-  .rating-amber .num{ color: var(--amber); }
-  .rating-green .num{ color: var(--green); }
-  .rating-none .num{ color: var(--muted); }
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 
-  .my-rating{ display:flex; align-items:center; gap:8px; }
-  .my-rating select{ width: 76px; padding: 6px 8px; font-size: 13px; }
-  .my-rating button{ padding: 6px 12px; font-size: 12.5px; }
-
-  .empty-state{
-    border: 1px dashed var(--line); padding: 28px 20px; text-align:center; color: var(--muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px;
-  }
-
-  .toast{
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--navy-deep); color:#fff; padding: 10px 18px; border-radius: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 13.5px; opacity:0; pointer-events:none; transition: opacity 0.25s ease;
-    z-index: 50;
-  }
-  .toast.show{ opacity:1; }
-
-  .checkbox-row{ display:flex; align-items:center; gap:8px; margin-top:14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13.5px; color: var(--muted); }
-  .checkbox-row input{ width:auto; }
-
-  .anon-badge{ font-style: italic; color: var(--muted); }
+@media (max-width:760px){
+  .auth{grid-template-columns:1fr;gap:20px;min-height:0}
+  .auth h1{font-size:1.9rem}
+  .two{grid-template-columns:1fr}
+  h1{font-size:1.6rem}
+  .row{flex-direction:column;align-items:flex-start}
+  .row-side{justify-items:start;grid-auto-flow:column;align-items:center}
+  .steps li{font-size:.75rem}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div class="toast" id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (function(){
-  "use strict";
+'use strict';
 
-  const app = document.getElementById('app');
-  const toastEl = document.getElementById('toast');
+/* ---------- storage (browser localStorage, in-memory fallback) ---------- */
+var P = 'cpcr2_';
+var mem = {};
+var persistent = true;
+var store = {
+  get: function(k, d){
+    try { var v = localStorage.getItem(P + k); return v === null ? d : JSON.parse(v); }
+    catch(e){ return (k in mem) ? mem[k] : d; }
+  },
+  set: function(k, v){
+    mem[k] = v;
+    try { localStorage.setItem(P + k, JSON.stringify(v)); return true; }
+    catch(e){ return false; }
+  },
+  remove: function(k){
+    delete mem[k];
+    try { localStorage.removeItem(P + k); } catch(e){}
+  }
+};
 
-  window.addEventListener('error', function(e){
-    console.error('Uncaught error:', e.error || e.message);
-    showToast('Error: ' + (e.message || 'something went wrong'));
+/* ---------- state ---------- */
+var users = [], cases = [], me = null;
+var ui = { view:'cases', scope:'mine', state:'all', q:'', caseId:null, from:'cases', auth:'login', confirmClose:false, confirmReset:false };
+var STEPS = ['Reported','Under review','Assigned','Closed'];
+var SLUG = { 'Reported':'reported', 'Under review':'review', 'Assigned':'assigned', 'On hold':'hold', 'Closed':'closed' };
+var ROLE = { user:'Regular user', officer:'Case officer', admin:'Admin' };
+
+function load(){ users = store.get('users', []); cases = store.get('cases', []); }
+function save(){
+  var a = store.set('users', users), b = store.set('cases', cases);
+  if(!(a && b)) persistent = false;
+}
+
+/* ---------- helpers ---------- */
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
-  window.addEventListener('unhandledrejection', function(e){
-    console.error('Unhandled rejection:', e.reason);
-    showToast('Error: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
-  });
+}
+function uid(){ return 'x' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36); }
+function fmt(ts){
+  try { return new Date(ts).toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' }); }
+  catch(e){ return new Date(ts).toString(); }
+}
+function userById(id){ return users.filter(function(u){ return u.id === id; })[0] || null; }
+function nameOf(id){ var u = userById(id); return u ? u.name : 'Unknown user'; }
+async function hash(u, p){
+  var s = u.toLowerCase() + ':' + p;
+  try {
+    var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
+  } catch(e){ return 'plain:' + s; }
+}
+var toastTimer;
+function toast(s){
+  var el = document.getElementById('toast');
+  el.textContent = s; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+function pill(status){ return '<span class="pill st-' + SLUG[status] + '">' + esc(status) + '</span>'; }
+function rateClass(v){ return v < 5 ? 'rate-low' : (v < 9 ? 'rate-mid' : 'rate-high'); }
+function avgOf(c){
+  var vals = Object.keys(c.ratings || {}).map(function(k){ return c.ratings[k]; });
+  if(!vals.length) return null;
+  return { avg: vals.reduce(function(a,b){ return a + b; }, 0) / vals.length, n: vals.length };
+}
+function isStaff(){ return me && (me.role === 'admin' || me.role === 'officer'); }
+function canFull(c){ return me.role === 'admin' || c.reporterId === me.id || c.assigneeId === me.id; }
+function isHandler(c){ return me.role === 'admin' || c.assigneeId === me.id; }
+function defaultScope(){ return me.role === 'admin' ? 'all' : (me.role === 'officer' ? 'assigned' : 'mine'); }
+function resetUi(){
+  ui.view = 'cases'; ui.scope = defaultScope(); ui.state = 'all'; ui.q = '';
+  ui.caseId = null; ui.confirmClose = false; ui.confirmReset = false;
+}
+function go(view, extra){
+  ui.view = view; ui.confirmClose = false; ui.confirmReset = false;
+  if(extra){ for(var k in extra) ui[k] = extra[k]; }
+  render(); window.scrollTo(0, 0);
+}
 
-  let session = null; // { username }
-  let currentAuthTab = 'login';
-  let currentTab = 'report';
-  let cases = [];
-  let loading = true;
-  let authError = '';
-
-  function showToast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    setTimeout(()=> toastEl.classList.remove('show'), 2200);
+/* ---------- boot ---------- */
+async function boot(){
+  try { localStorage.setItem(P + 'probe', '1'); localStorage.removeItem(P + 'probe'); persistent = true; }
+  catch(e){ persistent = false; }
+  load();
+  if(!users.length){
+    users.push({ id: uid(), name:'System Admin', username:'admin', pass: await hash('admin','admin123'), role:'admin', createdAt: Date.now() });
+    save();
   }
+  var sid = store.get('session', null);
+  me = userById(sid);
+  if(me) resetUi();
+  render();
+}
 
-  // Self-contained hash (no dependency on crypto.subtle, which is not
-  // reliably available inside sandboxed artifact iframes). This is NOT
-  // cryptographically secure — fine for this demo, not for a real system.
-  async function sha256(text){
-    let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0;
-    for (let i = 0; i < text.length; i++){
-      const ch = text.charCodeAt(i);
-      h1 = Math.imul(h1 ^ ch, 2654435761);
-      h2 = Math.imul(h2 ^ ch, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-    const combined = (h1 >>> 0).toString(16).padStart(8,'0') + (h2 >>> 0).toString(16).padStart(8,'0');
-    return combined;
+window.addEventListener('storage', function(e){
+  if(!e.key || e.key.indexOf(P) !== 0) return;
+  var t = document.activeElement && document.activeElement.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  load();
+  if(me){ me = userById(me.id); }
+  render();
+});
+
+/* ---------- render ---------- */
+function render(){
+  var app = document.getElementById('app');
+  if(!me){ app.innerHTML = authView(); return; }
+  var body = '';
+  if(ui.view === 'report') body = reportView();
+  else if(ui.view === 'closed') body = closedView();
+  else if(ui.view === 'staff' && me.role === 'admin') body = staffView();
+  else if(ui.view === 'case') body = caseView();
+  else body = casesView();
+  app.innerHTML = topbar() + (persistent ? '' :
+    '<div class="wrap" style="padding-top:14px"><div class="banner">This browser is blocking storage, so changes will be lost when you close this tab.</div></div>') + body;
+  if(ui.view === 'cases') renderList();
+}
+
+function topbar(){
+  var newCount = me.role === 'admin' ? cases.filter(function(c){ return c.status === 'Reported'; }).length : 0;
+  function nb(v, label, extra){
+    var cur = (ui.view === v || (ui.view === 'case' && ui.from === v)) ? ' aria-current="page"' : '';
+    return '<button data-action="nav" data-v="' + v + '"' + cur + '>' + label + (extra || '') + '</button>';
   }
+  return '<header class="topbar"><div class="wrap bar">' +
+    '<div class="brand"><span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>Child Safety Case System</div>' +
+    '<div class="who"><span class="name">' + esc(me.name) + '</span><span class="role role-' + me.role + '">' + ROLE[me.role] + '</span>' +
+    '<button class="btn ghost sm" data-action="logout">Log out</button></div></div>' +
+    '<nav class="wrap nav" aria-label="Main">' +
+    nb('cases', 'Cases', newCount ? '<span class="count" title="Reports waiting for review">' + newCount + '</span>' : '') +
+    nb('report', 'Report a case') + nb('closed', 'Closed cases') +
+    (me.role === 'admin' ? nb('staff', 'Staff accounts') : '') +
+    '</nav></header>';
+}
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ----- auth ----- */
+function authView(){
+  var login = ui.auth === 'login';
+  return '<main class="wrap auth"><div>' +
+    '<span class="mark" style="width:48px;height:48px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>' +
+    '<h1>Report a concern about a child and follow what happens next.</h1>' +
+    '<p class="lead muted">Anyone can report a case. Admins review each report and assign it to a case officer, who keeps the case moving until it is closed.</p>' +
+    '<p class="hint" style="margin-top:18px">This is a demo. Everything is saved in this browser only, so please do not enter real names or details. Demo admin login: <b>admin</b> / <b>admin123</b>.</p>' +
+    '</div>' +
+    '<div class="card"><div class="tabs"><div class="seg" role="group" aria-label="Account">' +
+    '<button data-action="authtab" data-v="login" aria-pressed="' + login + '">Log in</button>' +
+    '<button data-action="authtab" data-v="register" aria-pressed="' + !login + '">Create account</button></div></div>' +
+    (login ?
+      '<form data-form="login" autocomplete="on"><label for="lu">Username</label><input id="lu" name="username" autocomplete="username" required>' +
+      '<label for="lp">Password</label><input id="lp" name="password" type="password" autocomplete="current-password" required>' +
+      '<div class="err" id="autherr" role="alert"></div><button class="btn primary" style="width:100%">Log in</button></form>'
+    :
+      '<form data-form="register" autocomplete="on"><label for="rn">Your name</label><input id="rn" name="name" autocomplete="name" required>' +
+      '<label for="ru">Username</label><input id="ru" name="username" autocomplete="username" required>' +
+      '<p class="hint">At least 3 characters. Letters, numbers, dots, dashes and underscores.</p>' +
+      '<label for="rp">Password</label><input id="rp" name="password" type="password" autocomplete="new-password" required>' +
+      '<p class="hint">At least 6 characters.</p>' +
+      '<div class="err" id="autherr" role="alert"></div><button class="btn primary" style="width:100%">Create account</button></form>') +
+    '</div></main>';
+}
+
+/* ----- cases list ----- */
+function scopesFor(){
+  if(me.role === 'admin') return [['all','All cases'],['assigned','Assigned to me'],['mine','My reports']];
+  if(me.role === 'officer') return [['assigned','Assigned to me'],['mine','My reports']];
+  return [];
+}
+function scopeCases(){
+  if(ui.scope === 'all' && me.role === 'admin') return cases.slice();
+  if(ui.scope === 'assigned') return cases.filter(function(c){ return c.assigneeId === me.id; });
+  return cases.filter(function(c){ return c.reporterId === me.id; });
+}
+function casesView(){
+  var sc = scopesFor();
+  var seg = sc.length > 1 ? '<div class="seg" role="group" aria-label="Which cases">' + sc.map(function(s){
+    return '<button data-action="scope" data-v="' + s[0] + '" aria-pressed="' + (ui.scope === s[0]) + '">' + s[1] + '</button>';
+  }).join('') + '</div>' : '';
+  return '<main class="wrap page"><div class="pagehead"><h1>Cases</h1>' +
+    '<button class="btn primary" data-action="nav" data-v="report">Report a case</button></div>' + seg +
+    '<div><label for="q" style="margin-top:0">Search</label><input type="search" id="q" placeholder="Title or child name" value="' + esc(ui.q) + '"></div>' +
+    '<div id="listwrap" style="display:grid;gap:16px"></div></main>';
+}
+function caseRow(c){
+  var meta = 'Child: ' + esc(c.childName) + '. Reported by ' + esc(nameOf(c.reporterId)) + ' on ' + fmt(c.createdAt) + '.' +
+    (c.assigneeId ? ' Handled by ' + esc(nameOf(c.assigneeId)) + '.' : '');
+  return '<button class="row" data-action="open" data-id="' + c.id + '" data-from="cases"><span class="row-main">' +
+    '<span class="row-title">' + esc(c.title) + '</span><span class="row-meta">' + meta + '</span></span>' +
+    '<span class="row-side">' + pill(c.status) + '</span></button>';
+}
+function renderList(){
+  var el = document.getElementById('listwrap'); if(!el) return;
+  var base = scopeCases();
+  var q = ui.q.trim().toLowerCase();
+  if(q) base = base.filter(function(c){ return (c.title + ' ' + c.childName).toLowerCase().indexOf(q) > -1; });
+  var chips = [['all','All (' + base.length + ')']].concat(['Reported','Under review','Assigned','On hold','Closed'].map(function(s){
+    return [s, s + ' (' + base.filter(function(c){ return c.status === s; }).length + ')'];
+  }));
+  var shown = ui.state === 'all' ? base : base.filter(function(c){ return c.status === ui.state; });
+  shown.sort(function(a,b){ return b.updatedAt - a.updatedAt; });
+  var empty;
+  if(!shown.length){
+    empty = '<div class="empty">' + (base.length || q ?
+      'No cases match. Try a different search or state.' :
+      (ui.scope === 'mine' ? 'You have not reported any cases yet. Use “Report a case” to start one.' :
+       ui.scope === 'assigned' ? 'No cases are assigned to you yet.' : 'No cases have been reported yet.')) + '</div>';
   }
+  el.innerHTML = '<div class="chips" role="group" aria-label="Filter by state">' + chips.map(function(c){
+    return '<button class="chip" data-action="filter" data-v="' + esc(c[0]) + '" aria-pressed="' + (ui.state === c[0]) + '">' + esc(c[1]) + '</button>';
+  }).join('') + '</div>' + (empty || '<div class="list">' + shown.map(caseRow).join('') + '</div>');
+}
 
-  function ratingBucket(avg){
-    if (avg === null) return 'none';
-    if (avg < 5) return 'red';
-    if (avg <= 8) return 'amber';
-    return 'green'; // 9-10
+/* ----- report ----- */
+function reportView(){
+  return '<main class="wrap page"><h1>Report a case</h1>' +
+    '<form class="card" data-form="report"><p class="muted">Tell us what you saw. An admin will look at your report, and you can follow its state under Cases.</p>' +
+    '<div><label for="t" style="margin-top:0">Title</label><input id="t" name="title" maxlength="120" placeholder="A short summary" required>' +
+    '<label for="cn">Name of the child involved</label><input id="cn" name="child" maxlength="120" required>' +
+    '<label for="d">What did you see?</label><textarea id="d" name="desc" rows="7" placeholder="What happened, where, and when." required></textarea></div>' +
+    '<div class="err" id="reperr" role="alert"></div>' +
+    '<div class="btnrow"><button class="btn primary">Submit report</button><button type="button" class="btn" data-action="nav" data-v="cases">Cancel</button></div></form></main>';
+}
+
+/* ----- closed cases ----- */
+function closedView(){
+  var list = cases.filter(function(c){ return c.status === 'Closed'; }).sort(function(a,b){ return (b.closedAt||0) - (a.closedAt||0); });
+  var rows = list.map(function(c){
+    var r = avgOf(c), mine = (c.ratings || {})[me.id];
+    return '<button class="row" data-action="open" data-id="' + c.id + '" data-from="closed"><span class="row-main">' +
+      '<span class="row-title">' + esc(c.title) + '</span>' +
+      '<span class="row-meta">Closed ' + fmt(c.closedAt || c.updatedAt) + (c.assigneeId ? ' by ' + esc(nameOf(c.assigneeId)) : '') +
+      (mine != null ? '. You rated it ' + mine + '/10.' : '. You have not rated it yet.') + '</span></span>' +
+      '<span class="row-side">' + (r ? '<span class="rate ' + rateClass(r.avg) + '">' + r.avg.toFixed(1) + '<small>/10 from ' + r.n + '</small></span>' : '<span class="muted small">Not rated yet</span>') + '</span></button>';
+  }).join('');
+  return '<main class="wrap page"><div><h1>Closed cases</h1><p class="muted" style="margin-top:6px">Anyone with an account can see that a case was closed and rate how it was handled, from 0 to 10. Details about the child stay private.</p></div>' +
+    (rows ? '<div class="list">' + rows + '</div>' : '<div class="empty">No cases have been closed yet.</div>') + '</main>';
+}
+
+/* ----- case detail ----- */
+function blurb(c){
+  var who = c.assigneeId ? esc(nameOf(c.assigneeId)) : 'someone';
+  switch(c.status){
+    case 'Reported': return 'This report has been received. An admin has not looked at it yet.';
+    case 'Under review': return 'An admin has seen this report and is checking that it is accurate. It is not assigned to anyone yet.';
+    case 'Assigned': return 'This case is being handled by ' + who + '.';
+    case 'On hold': return 'This case is paused because there is an issue to sort out first.';
+    default: return 'This case has been handled. Rate how it was handled below.';
   }
-
-  function avgRating(c){
-    if (!c.ratings || c.ratings.length === 0) return null;
-    const sum = c.ratings.reduce((a,r)=>a+r.value,0);
-    return sum / c.ratings.length;
+}
+function allowed(c){
+  var tx = [], assign = false;
+  if(me.role === 'admin'){
+    if(c.status === 'Reported'){ tx.push({k:'review', l:'Mark under review', p:1}); tx.push({k:'hold', l:'Put on hold'}); }
+    if(c.status === 'Under review'){ assign = true; tx.push({k:'hold', l:'Put on hold'}); }
+    if(c.status === 'Assigned'){ assign = true; tx.push({k:'close', l:'Close case', p:1}); tx.push({k:'hold', l:'Put on hold'}); }
+    if(c.status === 'On hold'){ tx.push({k:'resume', l:'Resume case', p:1}); }
+  } else if(c.assigneeId === me.id){
+    if(c.status === 'Assigned'){ tx.push({k:'close', l:'Close case', p:1}); tx.push({k:'hold', l:'Put on hold'}); }
+    if(c.status === 'On hold' && c.heldFrom === 'Assigned'){ tx.push({k:'resume', l:'Resume case', p:1}); }
   }
-
-  // True offline storage: the browser's own localStorage. No network calls,
-  // no external bridge — this only works when the page is opened as a
-  // standalone file in a real browser tab (not inside a sandboxed preview,
-  // which blocks localStorage by design).
-  const LS_PREFIX = 'cpcr_v1_';
-  let localStorageUnavailable = false;
-
-  function lsAvailable(){
-    try{
-      const testKey = LS_PREFIX + '__test__';
-      localStorage.setItem(testKey, '1');
-      localStorage.removeItem(testKey);
-      return true;
-    }catch(e){
-      return false;
-    }
+  return { tx: tx, assign: assign };
+}
+function actionsCard(c){
+  var a = allowed(c);
+  if(!a.tx.length && !a.assign) return '';
+  var needNote = a.tx.some(function(t){ return t.k === 'hold'; });
+  var h = '<section class="card" aria-labelledby="ah"><h2 id="ah">Update this case</h2>' +
+    '<div><label for="actnote" style="margin-top:0">Note ' + (needNote ? '(required when putting on hold)' : '(optional)') + '</label>' +
+    '<textarea id="actnote" rows="2" placeholder="What is the reason for this change?"></textarea></div>';
+  if(a.assign){
+    var staff = users.filter(function(u){ return u.role !== 'user'; });
+    h += '<div><label for="assignsel" style="margin-top:0">' + (c.assigneeId ? 'Reassign to' : 'Assign to') + '</label><div class="inline"><select id="assignsel">' +
+      staff.map(function(u){
+        var open = cases.filter(function(x){ return x.assigneeId === u.id && x.status !== 'Closed'; }).length;
+        var sel = (c.assigneeId ? c.assigneeId === u.id : u.id === me.id) ? ' selected' : '';
+        return '<option value="' + u.id + '"' + sel + '>' + esc(u.name) + (u.id === me.id ? ' (you)' : '') + ', ' + ROLE[u.role].toLowerCase() + ', ' + open + ' open</option>';
+      }).join('') + '</select><button class="btn primary" data-action="assign">' + (c.assigneeId ? 'Reassign case' : 'Assign case') + '</button></div></div>';
   }
-
-  async function dGet(key){
-    try{
-      return localStorage.getItem(LS_PREFIX + key);
-    }catch(e){
-      console.error('localStorage.getItem failed:', e);
-      localStorageUnavailable = true;
-      return null;
-    }
-  }
-
-  async function dSet(key, value){
-    try{
-      localStorage.setItem(LS_PREFIX + key, value);
-      return true;
-    }catch(e){
-      console.error('localStorage.setItem failed:', e);
-      localStorageUnavailable = true;
-      return false;
-    }
-  }
-
-  async function dListKeys(prefix){
-    try{
-      const keys = [];
-      for (let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
-        if (k && k.indexOf(LS_PREFIX + prefix) === 0){
-          keys.push(k.slice(LS_PREFIX.length));
-        }
+  if(a.tx.length){
+    h += '<div class="btnrow">' + a.tx.map(function(t){
+      if(t.k === 'close' && ui.confirmClose){
+        return '<span class="muted" style="align-self:center">Closing is final and opens the case for public ratings.</span>' +
+          '<button class="btn danger" data-action="tx" data-k="close-confirmed">Yes, close case</button>' +
+          '<button class="btn" data-action="cancelclose">Cancel</button>';
       }
-      return keys;
-    }catch(e){
-      console.error('localStorage enumeration failed:', e);
-      localStorageUnavailable = true;
-      return [];
-    }
+      return '<button class="btn' + (t.p ? ' primary' : '') + '" data-action="tx" data-k="' + t.k + '">' + t.l + '</button>';
+    }).join('') + '</div>';
   }
-
-  async function loadCases(){
-    const keys = await dListKeys('cases:');
-    const loaded = [];
-    for (const k of keys){
-      try{
-        const val = await dGet(k);
-        if (val) loaded.push(JSON.parse(val));
-      }catch(e){ /* skip unreadable entry */ }
-    }
-    loaded.sort((a,b)=> b.createdAt - a.createdAt);
-    cases = loaded;
+  return h + '</section>';
+}
+function ratingCard(c){
+  var r = avgOf(c), mine = (c.ratings || {})[me.id], can = c.assigneeId !== me.id;
+  var head = r ? '<div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap"><span class="bigrate ' + rateClass(r.avg) + '">' + r.avg.toFixed(1) + '</span><span class="muted">out of 10, from ' + r.n + ' rating' + (r.n === 1 ? '' : 's') + '</span></div>'
+    : '<p class="muted">No one has rated this case yet.</p>';
+  var form;
+  if(can){
+    form = '<div><p style="font-weight:700;margin-bottom:8px">' + (mine != null ? 'Your rating: ' + mine + '. Tap a number to change it.' : 'How well was this case handled? 0 is worst, 10 is best.') + '</p>' +
+      '<div class="scale" role="group" aria-label="Rate from 0 to 10">' +
+      Array.apply(null, Array(11)).map(function(_, i){ return '<button data-action="rate" data-n="' + i + '" aria-pressed="' + (mine === i) + '">' + i + '</button>'; }).join('') + '</div></div>';
+  } else form = '<p class="muted">You handled this case, so you cannot rate it.</p>';
+  return '<section class="card" aria-labelledby="rh"><h2 id="rh">How was this case handled?</h2>' + head + form + '</section>';
+}
+function caseView(){
+  var c = cases.filter(function(x){ return x.id === ui.caseId; })[0];
+  var backLabel = ui.from === 'closed' ? 'Back to closed cases' : 'Back to cases';
+  var back = '<div><button class="btn sm" data-action="nav" data-v="' + (ui.from === 'closed' ? 'closed' : 'cases') + '">' + backLabel + '</button></div>';
+  if(!c || !(canFull(c) || c.status === 'Closed')){
+    return '<main class="wrap page">' + back + '<div class="empty">You do not have access to this case.</div></main>';
   }
-
-  async function saveCase(c){
-    return await dSet('cases:' + c.id, JSON.stringify(c));
+  var full = canFull(c), handler = isHandler(c);
+  var cur = c.status === 'Closed' ? 4 : STEPS.indexOf(c.status === 'On hold' ? (c.heldFrom || 'Reported') : c.status);
+  var steps = '<ol class="steps" aria-label="Case progress">' + STEPS.map(function(s, i){
+    var cls = i < cur ? 'done' : (i === cur ? 'cur' + (c.status === 'On hold' ? ' paused' : '') : '');
+    return '<li class="' + cls + '"' + (i === cur ? ' aria-current="step"' : '') + '><span class="dot"></span><span>' + s + '</span></li>';
+  }).join('') + '</ol>';
+  var h = '<main class="wrap page">' + back +
+    '<div class="pagehead"><h1 style="overflow-wrap:anywhere">' + esc(c.title) + '</h1>' + pill(c.status) + '</div>' +
+    '<section class="card">' + steps + '<p>' + blurb(c) + '</p>' +
+    (c.status === 'On hold' && handler && c.holdNote ? '<p class="small muted">Reason: ' + esc(c.holdNote) + '</p>' : '') + '</section>';
+  if(full){
+    h += '<section class="card"><h2>Case details</h2><dl class="facts" style="margin:0">' +
+      '<div class="fact"><dt>Child involved</dt><dd>' + esc(c.childName) + '</dd></div>' +
+      '<div class="fact"><dt>Reported by</dt><dd>' + esc(nameOf(c.reporterId)) + '</dd></div>' +
+      '<div class="fact"><dt>Reported on</dt><dd>' + fmt(c.createdAt) + '</dd></div>' +
+      '<div class="fact"><dt>Handled by</dt><dd>' + (c.assigneeId ? esc(nameOf(c.assigneeId)) : 'Not assigned yet') + '</dd></div></dl>' +
+      '<div><h3 style="margin-bottom:4px">What the reporter saw</h3><p class="desc">' + esc(c.description) + '</p></div></section>';
+  } else {
+    h += '<section class="card"><p class="muted">The details of this case are private. You can see how it ended and rate how it was handled.</p>' +
+      (c.assigneeId ? '<p>Handled by <b>' + esc(nameOf(c.assigneeId)) + '</b></p>' : '') + '</section>';
   }
-
-  async function findUser(username){
-    const val = await dGet('users:' + username.toLowerCase());
-    return val ? JSON.parse(val) : null;
+  h += actionsCard(c);
+  if(full){
+    h += '<section class="card"><h2>History</h2><ul class="timeline">' + c.history.slice().reverse().map(function(e){
+      return '<li><div><b>' + esc(e.text) + '</b> <span class="muted small">by ' + esc(nameOf(e.by)) + ', ' + fmt(e.ts) + '</span></div>' +
+        (handler && e.note ? '<p class="small desc muted">' + esc(e.note) + '</p>' : '') + '</li>';
+    }).join('') + '</ul></section>';
   }
-
-  async function saveUser(u){
-    return await dSet('users:' + u.username.toLowerCase(), JSON.stringify(u));
+  if(handler){
+    var logs = (c.logs || []).slice().reverse();
+    h += '<section class="card" aria-labelledby="lh"><h2 id="lh">Case log</h2><p class="muted small">Progress updates on this case. Only admins and the assigned officer can see and add entries.</p>' +
+      (c.status !== 'Closed' ?
+        '<div><label for="lognote" style="margin-top:0">New log entry</label><textarea id="lognote" rows="3" placeholder="What has happened on this case?"></textarea></div>' +
+        '<div><button class="btn primary" data-action="addlog">Add log entry</button></div>' : '') +
+      (logs.length ? '<div style="display:grid;gap:14px">' + logs.map(function(l){
+        return '<div class="entry"><div class="meta">' + esc(nameOf(l.by)) + ', ' + fmt(l.ts) + '</div><p>' + esc(l.text) + '</p></div>';
+      }).join('') + '</div>' : '<p class="muted">No log entries yet.</p>') + '</section>';
   }
+  if(c.status === 'Closed') h += ratingCard(c);
+  return h + '</main>';
+}
 
-  // ---------- Render ----------
+/* ----- staff ----- */
+function staffView(){
+  var staff = users.filter(function(u){ return u.role !== 'user'; });
+  var members = users.length - staff.length;
+  return '<main class="wrap page"><div><h1>Staff accounts</h1><p class="muted" style="margin-top:6px">Only admins can create case officer and admin accounts.</p></div>' +
+    '<div class="two"><form class="card" data-form="staff"><h2>Create an account</h2>' +
+    '<div><label for="sn" style="margin-top:0">Full name</label><input id="sn" name="name" required>' +
+    '<label for="su">Username</label><input id="su" name="username" autocomplete="off" required>' +
+    '<label for="sp">Password</label><input id="sp" name="password" type="text" autocomplete="off" required><p class="hint">At least 6 characters. Share it with the person privately.</p>' +
+    '<label for="sr">Account type</label><select id="sr" name="role"><option value="officer">Case officer</option><option value="admin">Admin</option></select></div>' +
+    '<div class="err" id="stferr" role="alert"></div><button class="btn primary">Create account</button></form>' +
+    '<section class="card"><h2>Current staff</h2><div class="people">' + staff.map(function(u){
+      var open = cases.filter(function(c){ return c.assigneeId === u.id && c.status !== 'Closed'; }).length;
+      return '<div class="person"><div><b>' + esc(u.name) + '</b><div class="muted small">@' + esc(u.username) + ', ' + open + ' open case' + (open === 1 ? '' : 's') + '</div></div>' +
+        '<span class="role role-' + u.role + '">' + ROLE[u.role] + '</span></div>';
+    }).join('') + '</div><p class="muted small">' + members + ' registered regular user' + (members === 1 ? '' : 's') + '.</p></section></div>' +
+    '<section class="card"><h2>Demo data</h2><p class="muted">Clear every account and case saved in this browser and start again with only the default admin.</p>' +
+    '<div class="btnrow">' + (ui.confirmReset ?
+      '<button class="btn danger" data-action="reset-confirmed">Yes, erase everything</button><button class="btn" data-action="cancelreset">Cancel</button>' :
+      '<button class="btn danger" data-action="reset">Reset demo data</button>') + '</div></section></main>';
+}
 
-  function render(){
-    if (loading){
-      app.innerHTML = '<p class="sans" style="padding-top:60px;color:var(--muted);">Loading…</p>';
-      return;
-    }
-    app.innerHTML = '';
-    app.appendChild(renderHeader());
-    app.appendChild(renderNotice());
+/* ---------- actions ---------- */
+function addHistory(c, text, note){
+  c.history.push({ ts: Date.now(), by: me.id, text: text, note: note || '' });
+  c.updatedAt = Date.now();
+}
+function actNote(){ var e = document.getElementById('actnote'); return e ? e.value.trim() : ''; }
 
-    if (localStorageUnavailable){
-      const err = document.createElement('div');
-      err.className = 'notice';
-      err.style.borderLeftColor = 'var(--red)';
-      err.innerHTML = '<strong>This browser is blocking local storage.</strong> That usually means private/incognito browsing, or a strict cookie/storage setting. Data entered now will not be saved. Try a normal browser window, or check your browser\'s site data settings for this page.';
-      app.appendChild(err);
-    }
-
-    if (!session){
-      app.appendChild(renderAuth());
-    } else {
-      app.appendChild(renderTabs());
-      const content = document.createElement('div');
-      if (currentTab === 'report') content.appendChild(renderReportForm());
-      else content.appendChild(renderCaseList());
-      app.appendChild(content);
-    }
+function doTx(c, k){
+  var a = allowed(c);
+  var ok = a.tx.some(function(t){ return t.k === k || (k === 'close-confirmed' && t.k === 'close'); });
+  if(!ok){ toast('You cannot make that change.'); return; }
+  var note = actNote();
+  if(k === 'review'){
+    c.status = 'Under review'; addHistory(c, 'Marked under review', note);
+  } else if(k === 'hold'){
+    if(!note){ toast('Add a note before putting the case on hold.'); return; }
+    c.heldFrom = c.status; c.status = 'On hold'; c.holdNote = note; addHistory(c, 'Put on hold', note);
+  } else if(k === 'resume'){
+    var back = c.heldFrom || 'Under review';
+    c.status = back; c.heldFrom = null; c.holdNote = ''; addHistory(c, 'Resumed, back to ' + back, note);
+  } else if(k === 'close'){
+    ui.confirmClose = true; ui.pendingNote = note; render(); return;
+  } else if(k === 'close-confirmed'){
+    c.status = 'Closed'; c.closedAt = Date.now(); c.ratings = c.ratings || {};
+    addHistory(c, 'Closed', note || ui.pendingNote || ''); ui.confirmClose = false; ui.pendingNote = '';
   }
+  save(); render(); toast('Case updated.');
+}
+function doAssign(c){
+  var a = allowed(c);
+  if(!a.assign){ toast('You cannot assign this case right now.'); return; }
+  var sel = document.getElementById('assignsel');
+  var target = userById(sel && sel.value);
+  if(!target || target.role === 'user'){ toast('Choose a case officer or admin.'); return; }
+  var was = c.assigneeId;
+  c.assigneeId = target.id; c.status = 'Assigned';
+  addHistory(c, (was ? 'Reassigned to ' : 'Assigned to ') + target.name, actNote());
+  save(); render(); toast('Case assigned to ' + target.name + '.');
+}
 
-  function renderHeader(){
-    const header = document.createElement('header');
-    header.className = 'site';
-    header.innerHTML = `
-      <div class="top-row">
-        <div>
-          <h1>Child Protection Case Registry</h1>
-          <p class="tagline">A public log for tracking how reported cases are being handled, and for rating the responsiveness of the officials assigned to them.</p>
-        </div>
-        <div class="session-box sans">
-          ${session ? `<div class="who">${escapeHtml(session.username)}</div><button class="ghost small" id="logout-btn">Log out</button>` : ''}
-        </div>
-      </div>
-    `;
-    if (session){
-      header.querySelector('#logout-btn').addEventListener('click', ()=>{
-        session = null;
-        currentTab = 'report';
-        render();
-      });
-    }
-    return header;
+/* ---------- events ---------- */
+document.addEventListener('click', async function(e){
+  var t = e.target.closest('[data-action]'); if(!t) return;
+  var a = t.getAttribute('data-action');
+  var c = ui.caseId ? cases.filter(function(x){ return x.id === ui.caseId; })[0] : null;
+  if(a === 'authtab'){ ui.auth = t.getAttribute('data-v'); render(); }
+  else if(a === 'nav'){ go(t.getAttribute('data-v'), { caseId: null }); }
+  else if(a === 'logout'){ store.remove('session'); me = null; ui.auth = 'login'; render(); window.scrollTo(0,0); }
+  else if(a === 'scope'){ ui.scope = t.getAttribute('data-v'); ui.state = 'all'; render(); }
+  else if(a === 'filter'){ ui.state = t.getAttribute('data-v'); renderList(); }
+  else if(a === 'open'){ go('case', { caseId: t.getAttribute('data-id'), from: t.getAttribute('data-from') || 'cases' }); }
+  else if(a === 'tx' && c){ doTx(c, t.getAttribute('data-k')); }
+  else if(a === 'cancelclose'){ ui.confirmClose = false; render(); }
+  else if(a === 'assign' && c){ doAssign(c); }
+  else if(a === 'addlog' && c){
+    var box = document.getElementById('lognote'); var v = box ? box.value.trim() : '';
+    if(!isHandler(c) || c.status === 'Closed'){ toast('You cannot add a log entry here.'); return; }
+    if(!v){ toast('Write something before adding the entry.'); return; }
+    c.logs = c.logs || []; c.logs.push({ id: uid(), ts: Date.now(), by: me.id, text: v });
+    c.updatedAt = Date.now(); save(); render(); toast('Log entry added.');
   }
-
-  function renderNotice(){
-    const div = document.createElement('div');
-    div.className = 'notice';
-    div.innerHTML = `<strong>This is a demonstration tool, not an emergency service.</strong> If a child is in immediate danger, contact your local emergency number right away. `;
-    return div;
+  else if(a === 'rate' && c){
+    var n = parseInt(t.getAttribute('data-n'), 10);
+    if(c.status !== 'Closed' || c.assigneeId === me.id || isNaN(n) || n < 0 || n > 10) return;
+    c.ratings = c.ratings || {}; c.ratings[me.id] = n; save(); render(); toast('Thanks, you rated this case ' + n + ' out of 10.');
   }
-
-  // ---------- Auth ----------
-
-  function renderAuth(){
-    const wrap = document.createElement('div');
-
-    const tabs = document.createElement('div');
-    tabs.className = 'auth-tabs sans';
-    tabs.innerHTML = `
-      <button class="${currentAuthTab==='login'?'active':''}" id="tab-login">Log in</button>
-      <button class="${currentAuthTab==='register'?'active':''}" id="tab-register">Register</button>
-    `;
-    tabs.querySelector('#tab-login').addEventListener('click', ()=>{ currentAuthTab='login'; authError=''; render(); });
-    tabs.querySelector('#tab-register').addEventListener('click', ()=>{ currentAuthTab='register'; authError=''; render(); });
-    wrap.appendChild(tabs);
-
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-
-    if (currentAuthTab === 'login'){
-      panel.innerHTML = `
-        <label for="login-username">Username</label>
-        <input id="login-username" type="text" autocomplete="username" />
-        <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" />
-        ${authError ? `<div class="field-error">${escapeHtml(authError)}</div>` : ''}
-        <div style="margin-top:18px;"><button id="login-submit">Log in</button></div>
-      `;
-      panel.querySelector('#login-submit').addEventListener('click', onLoginSubmit);
-      panel.querySelectorAll('input').forEach(inp=>{
-        inp.addEventListener('keydown', e=>{ if (e.key==='Enter') onLoginSubmit(); });
-      });
-    } else {
-      panel.innerHTML = `
-        <label for="reg-username">Choose a username</label>
-        <input id="reg-username" type="text" autocomplete="username" />
-        <label for="reg-password">Choose a password</label>
-        <input id="reg-password" type="password" autocomplete="new-password" />
-        <label for="reg-password2">Confirm password</label>
-        <input id="reg-password2" type="password" autocomplete="new-password" />
-        ${authError ? `<div class="field-error">${escapeHtml(authError)}</div>` : ''}
-        <div style="margin-top:18px;"><button id="reg-submit">Create account</button></div>
-      `;
-      panel.querySelector('#reg-submit').addEventListener('click', onRegisterSubmit);
-      panel.querySelectorAll('input').forEach(inp=>{
-        inp.addEventListener('keydown', e=>{ if (e.key==='Enter') onRegisterSubmit(); });
-      });
-    }
-
-    wrap.appendChild(panel);
-    return wrap;
+  else if(a === 'reset'){ ui.confirmReset = true; render(); }
+  else if(a === 'cancelreset'){ ui.confirmReset = false; render(); }
+  else if(a === 'reset-confirmed' && me.role === 'admin'){
+    ['users','cases','session'].forEach(function(k){ store.remove(k); });
+    users = []; cases = []; me = null; ui.auth = 'login'; await boot(); toast('Demo data erased.');
   }
+});
 
-  async function onLoginSubmit(){
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    if (!username || !password){
-      authError = 'Enter both a username and password.';
-      render();
-      return;
-    }
-    try{
-      const user = await findUser(username);
-      if (!user){
-        authError = 'No account found with that username.';
-        render();
-        return;
-      }
-      const hash = await sha256(password);
-      if (hash !== user.passwordHash){
-        authError = 'Incorrect password.';
-        render();
-        return;
-      }
-      session = { username: user.username };
-      authError = '';
-      currentTab = 'report';
-      render();
-      showToast('Logged in as ' + user.username);
-    }catch(e){
-      authError = 'Something went wrong logging in: ' + (e && e.message ? e.message : e);
-      render();
-    }
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id === 'q'){ ui.q = e.target.value; renderList(); }
+});
+
+document.addEventListener('submit', async function(e){
+  var f = e.target.closest('form[data-form]'); if(!f) return;
+  e.preventDefault();
+  var kind = f.getAttribute('data-form');
+  function fail(id, msg){ var el = document.getElementById(id); if(el) el.textContent = msg; }
+  var okUser = /^[a-z0-9._-]{3,}$/;
+
+  if(kind === 'login'){
+    var u = f.username.value.trim().toLowerCase();
+    var rec = users.filter(function(x){ return x.username === u; })[0];
+    var h = await hash(u, f.password.value);
+    if(!rec || rec.pass !== h){ fail('autherr', 'The username or password is wrong.'); return; }
+    me = rec; store.set('session', me.id); resetUi(); render(); window.scrollTo(0,0);
   }
-
-  async function onRegisterSubmit(){
-    console.log('Register clicked');
-    try{
-      const usernameEl = document.getElementById('reg-username');
-      const passwordEl = document.getElementById('reg-password');
-      const password2El = document.getElementById('reg-password2');
-      if (!usernameEl || !passwordEl || !password2El){
-        authError = 'Form did not load correctly. Please reload.';
-        render();
-        return;
-      }
-      const username = usernameEl.value.trim();
-      const password = passwordEl.value;
-      const password2 = password2El.value;
-
-      if (!username || username.length < 3){
-        authError = 'Username must be at least 3 characters.'; render(); return;
-      }
-      if (!/^[a-zA-Z0-9_\-]+$/.test(username)){
-        authError = 'Username can only contain letters, numbers, - and _.'; render(); return;
-      }
-      if (!password || password.length < 6){
-        authError = 'Password must be at least 6 characters.'; render(); return;
-      }
-      if (password !== password2){
-        authError = 'Passwords do not match.'; render(); return;
-      }
-
-      console.log('Checking for existing user:', username);
-      const existing = await findUser(username);
-      console.log('Existing user check result:', existing);
-      if (existing){
-        authError = 'That username is already taken.'; render(); return;
-      }
-      const passwordHash = await sha256(password);
-      console.log('Password hashed, saving user...');
-      const user = { username, passwordHash, createdAt: Date.now() };
-      const saveResult = await saveUser(user);
-      console.log('Save result:', saveResult);
-      session = { username: user.username };
-      authError = '';
-      currentTab = 'report';
-      render();
-      showToast('Account created. Welcome, ' + user.username + '.');
-    }catch(e){
-      console.error('Registration failed:', e);
-      authError = 'Something went wrong creating the account: ' + (e && e.message ? e.message : String(e));
-      render();
-    }
+  else if(kind === 'register'){
+    var name = f.name.value.trim(), un = f.username.value.trim().toLowerCase(), pw = f.password.value;
+    if(!name){ fail('autherr', 'Enter your name.'); return; }
+    if(!okUser.test(un)){ fail('autherr', 'Username needs at least 3 letters, numbers, dots, dashes or underscores.'); return; }
+    if(pw.length < 6){ fail('autherr', 'Password needs at least 6 characters.'); return; }
+    load();
+    if(users.some(function(x){ return x.username === un; })){ fail('autherr', 'That username is taken. Choose another.'); return; }
+    var nu = { id: uid(), name: name, username: un, pass: await hash(un, pw), role: 'user', createdAt: Date.now() };
+    users.push(nu); save(); me = nu; store.set('session', me.id); resetUi(); render(); toast('Welcome, ' + name + '.');
   }
-
-  // ---------- Tabs ----------
-
-  function renderTabs(){
-    const nav = document.createElement('nav');
-    nav.className = 'tabs sans';
-    nav.innerHTML = `
-      <button class="${currentTab==='report'?'active':''}" id="nav-report">Report a case</button>
-      <button class="${currentTab==='browse'?'active':''}" id="nav-browse">All cases (${cases.length})</button>
-    `;
-    nav.querySelector('#nav-report').addEventListener('click', ()=>{ currentTab='report'; render(); });
-    nav.querySelector('#nav-browse').addEventListener('click', ()=>{ currentTab='browse'; render(); });
-    return nav;
+  else if(kind === 'report'){
+    var title = f.title.value.trim(), child = f.child.value.trim(), desc = f.desc.value.trim();
+    if(!title || !child || !desc){ fail('reperr', 'Fill in the title, the child\'s name and what you saw.'); return; }
+    load();
+    var now = Date.now();
+    var nc = { id: uid(), title: title, childName: child, description: desc, reporterId: me.id, status: 'Reported',
+      assigneeId: null, heldFrom: null, holdNote: '', createdAt: now, updatedAt: now, closedAt: null,
+      history: [{ ts: now, by: me.id, text: 'Case reported', note: '' }], logs: [], ratings: {} };
+    cases.push(nc); save();
+    ui.scope = 'mine'; ui.state = 'all'; ui.q = '';
+    go('case', { caseId: nc.id, from: 'cases' }); toast('Case reported. An admin will review it.');
   }
-
-  // ---------- Report form ----------
-
-  let formError = '';
-
-  function renderReportForm(){
-    const wrap = document.createElement('div');
-    wrap.innerHTML = `<h2 class="section-title">Report a case</h2>`;
-
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-    panel.style.maxWidth = '560px';
-    panel.innerHTML = `
-      <label for="f-title">Case title</label>
-      <input id="f-title" type="text" placeholder="Short summary, e.g. Unfollowed-up referral, Lincoln Elementary" />
-
-      <label for="f-desc">What happened, and what needs attention</label>
-      <textarea id="f-desc" rows="5" placeholder="Describe the situation and what response you expect from the responsible agency."></textarea>
-
-      <label for="f-official">Official or agency responsible for the case</label>
-      <input id="f-official" type="text" placeholder="Name, title, or department" />
-
-      <label for="f-status">Current status</label>
-      <select id="f-status">
-        <option value="open">Open — no meaningful response yet</option>
-        <option value="review">Under review — official is engaged</option>
-        <option value="resolved">Resolved</option>
-      </select>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="f-anon" />
-        <label for="f-anon" style="margin:0;">Report anonymously (your username will not be shown on this case)</label>
-      </div>
-
-      ${formError ? `<div class="field-error">${escapeHtml(formError)}</div>` : ''}
-
-      <div style="margin-top:18px;"><button id="f-submit">Submit report</button></div>
-    `;
-    panel.querySelector('#f-submit').addEventListener('click', onReportSubmit);
-    wrap.appendChild(panel);
-    return wrap;
+  else if(kind === 'staff' && me.role === 'admin'){
+    var sn = f.name.value.trim(), su = f.username.value.trim().toLowerCase(), sp = f.password.value, sr = f.role.value;
+    if(!sn){ fail('stferr', 'Enter the person\'s full name.'); return; }
+    if(!okUser.test(su)){ fail('stferr', 'Username needs at least 3 letters, numbers, dots, dashes or underscores.'); return; }
+    if(sp.length < 6){ fail('stferr', 'Password needs at least 6 characters.'); return; }
+    if(sr !== 'officer' && sr !== 'admin'){ fail('stferr', 'Choose an account type.'); return; }
+    load();
+    if(users.some(function(x){ return x.username === su; })){ fail('stferr', 'That username is taken. Choose another.'); return; }
+    users.push({ id: uid(), name: sn, username: su, pass: await hash(su, sp), role: sr, createdAt: Date.now(), createdBy: me.id });
+    save(); render(); toast(ROLE[sr] + ' account created for ' + sn + '.');
   }
+});
 
-  async function onReportSubmit(){
-    const title = document.getElementById('f-title').value.trim();
-    const description = document.getElementById('f-desc').value.trim();
-    const official = document.getElementById('f-official').value.trim();
-    const status = document.getElementById('f-status').value;
-    const anon = document.getElementById('f-anon').checked;
-
-    if (!title || !description || !official){
-      formError = 'Please fill in the title, description, and responsible official.';
-      render();
-      return;
-    }
-
-    const c = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
-      title, description, official, status,
-      reporter: anon ? null : session.username,
-      createdAt: Date.now(),
-      ratings: []
-    };
-    await saveCase(c);
-    await loadCases();
-    formError = '';
-    currentTab = 'browse';
-    render();
-    showToast('Case reported.');
-  }
-
-  // ---------- Browse / rate ----------
-
-  function renderCaseList(){
-    const wrap = document.createElement('div');
-    wrap.innerHTML = `<h2 class="section-title">All reported cases</h2>`;
-
-    if (cases.length === 0){
-      const empty = document.createElement('div');
-      empty.className = 'empty-state';
-      empty.textContent = 'No cases have been reported yet. Use "Report a case" to add the first one.';
-      wrap.appendChild(empty);
-      return wrap;
-    }
-
-    const ul = document.createElement('ul');
-    ul.className = 'case-list';
-
-    cases.forEach(c=>{
-      const li = document.createElement('li');
-      li.className = 'case-item status-' + c.status;
-
-      const avg = avgRating(c);
-      const bucket = ratingBucket(avg);
-      const myExisting = c.ratings.find(r => r.username === session.username);
-
-      const statusLabel = c.status === 'open' ? 'Open' : c.status === 'review' ? 'Under review' : 'Resolved';
-      const dateStr = new Date(c.createdAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-      const reporterStr = c.reporter ? escapeHtml(c.reporter) : '<span class="anon-badge">anonymous</span>';
-
-      li.innerHTML = `
-        <div class="case-top">
-          <div>
-            <p class="case-title">${escapeHtml(c.title)}</p>
-            <p class="case-meta">Reported by ${reporterStr} on ${dateStr}</p>
-          </div>
-          <span class="status-pill">${statusLabel}</span>
-        </div>
-        <p class="case-desc">${escapeHtml(c.description)}</p>
-        <p class="case-official">Responsible: <b>${escapeHtml(c.official)}</b></p>
-        <div class="rating-row">
-          <div class="rating-score rating-${bucket}">
-            <span class="num">${avg === null ? '—' : avg.toFixed(1)}</span>
-            <span class="of">/ 10</span>
-            <span class="count">${c.ratings.length} rating${c.ratings.length===1?'':'s'}</span>
-          </div>
-          <div class="my-rating">
-            <select id="rate-${c.id}">
-              ${Array.from({length:10},(_,i)=>i+1).map(n=>`<option value="${n}" ${myExisting && myExisting.value===n ? 'selected':''}>${n}</option>`).join('')}
-            </select>
-            <button class="small" id="rate-btn-${c.id}">${myExisting ? 'Update my rating' : 'Rate handling'}</button>
-          </div>
-        </div>
-      `;
-
-      li.querySelector('#rate-btn-' + c.id).addEventListener('click', async ()=>{
-        const val = parseInt(document.getElementById('rate-' + c.id).value, 10);
-        await submitRating(c.id, val);
-      });
-
-      ul.appendChild(li);
-    });
-
-    wrap.appendChild(ul);
-    return wrap;
-  }
-
-  async function submitRating(caseId, value){
-    const c = cases.find(x => x.id === caseId);
-    if (!c) return;
-    const existingIdx = c.ratings.findIndex(r => r.username === session.username);
-    const entry = { username: session.username, value, ts: Date.now() };
-    if (existingIdx >= 0) c.ratings[existingIdx] = entry;
-    else c.ratings.push(entry);
-    await saveCase(c);
-    await loadCases();
-    render();
-    showToast('Rating saved.');
-  }
-
-  // ---------- Init ----------
-
-  async function init(){
-    loading = true;
-    render();
-    if (!lsAvailable()){
-      localStorageUnavailable = true;
-    }
-    try{
-      await loadCases();
-    }catch(e){
-      console.error('loadCases failed:', e);
-    }
-    loading = false;
-    render();
-  }
-
-  init();
+boot();
 })();
 </script>
 </body>
