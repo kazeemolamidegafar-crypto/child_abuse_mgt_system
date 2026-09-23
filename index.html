@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Child Safety Case System</title>
+<title>Child Abuse Management System</title>
 <style>
 :root{
   --bg:#F3F6F8; --surface:#FFFFFF; --surface-2:#EAF0F4; --ink:#14263A; --muted:#566878; --line:#D5DEE6;
   --primary:#0F6B6B; --primary-ink:#FFFFFF; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#B23A3A;
-  --s-reported:#2F62A0; --s-review:#9A6412; --s-assigned:#0F6B6B; --s-hold:#6F4FA0; --s-closed:#2A7748;
-  --r-low:#B23A3A; --r-mid:#9A6412; --r-high:#2A7748;
+  --s-reported:#2F62A0; --s-review:#9A6412; --s-assigned:#0F6B6B; --s-hold:#6F4FA0; --s-closed:#2A7748; --s-rejected:#B23A3A;
+  --p-low:#566878; --p-medium:#2F62A0; --p-high:#9A6412; --p-urgent:#B23A3A;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -18,15 +18,15 @@
   :root:not([data-theme="light"]){
     --bg:#0E1A26; --surface:#15263A; --surface-2:#1B3049; --ink:#E6EEF5; --muted:#9DB0C2; --line:#28405A;
     --primary:#3FB6B0; --primary-ink:#06222A; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#F08080;
-    --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088;
-    --r-low:#F08080; --r-mid:#E0A94A; --r-high:#63C088;
+    --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088; --s-rejected:#F08080;
+    --p-low:#9DB0C2; --p-medium:#7FB0EA; --p-high:#E0A94A; --p-urgent:#F08080;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0E1A26; --surface:#15263A; --surface-2:#1B3049; --ink:#E6EEF5; --muted:#9DB0C2; --line:#28405A;
   --primary:#3FB6B0; --primary-ink:#06222A; --accent:#F0B429; --accent-ink:#3A2A00; --danger:#F08080;
-  --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088;
-  --r-low:#F08080; --r-mid:#E0A94A; --r-high:#63C088;
+  --s-reported:#7FB0EA; --s-review:#E0A94A; --s-assigned:#4CC2BC; --s-hold:#B79BE3; --s-closed:#63C088; --s-rejected:#F08080;
+  --p-low:#9DB0C2; --p-medium:#7FB0EA; --p-high:#E0A94A; --p-urgent:#F08080;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 *,*::before,*::after{box-sizing:inherit}
@@ -42,7 +42,7 @@ h3{font-size:1.05rem}
 p{margin:0}
 .muted{color:var(--muted)}
 .small{font-size:.875rem}
-.wrap{max-width:980px;margin:0 auto;padding-left:20px;padding-right:20px}
+.wrap{max-width:1040px;margin:0 auto;padding-left:20px;padding-right:20px}
 .page{padding-top:28px;padding-bottom:64px;display:grid;gap:20px}
 :focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 
@@ -50,6 +50,7 @@ p{margin:0}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;padding-bottom:10px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem}
+.brand .sub{font-weight:400;color:var(--muted);font-size:.8rem;display:block}
 .mark{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .who .name{font-weight:700}
@@ -69,7 +70,7 @@ p{margin:0}
 .btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 50%,var(--line))}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 .btn.sm{min-height:36px;padding:.25rem .75rem;font-size:.9rem}
-.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 label{display:block;font-weight:700;margin:14px 0 6px}
 input,select,textarea{
   font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--muted);border-radius:8px;
@@ -80,12 +81,20 @@ textarea{resize:vertical;min-height:88px}
 .inline select,.inline input{flex:1 1 200px;width:auto}
 .err{color:var(--danger);font-weight:700;min-height:1.4em;margin-top:10px}
 .hint{font-size:.875rem;color:var(--muted);margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.pwrow{position:relative}
+.pwrow input{padding-right:70px}
+.pwtoggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--primary);font-weight:700;font-size:.85rem;cursor:pointer;padding:6px 8px;min-height:0}
 
 /* surfaces */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px;align-content:start}
 .pagehead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .banner{background:color-mix(in srgb,var(--accent) 22%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 60%,var(--line));border-radius:10px;padding:10px 14px;font-size:.92rem}
+.banner.warn{background:color-mix(in srgb,var(--danger) 16%,var(--surface));border-color:color-mix(in srgb,var(--danger) 55%,var(--line))}
+.banner.ok{background:color-mix(in srgb,var(--s-closed) 16%,var(--surface));border-color:color-mix(in srgb,var(--s-closed) 45%,var(--line))}
 .empty{border:1px dashed var(--muted);border-radius:12px;padding:28px 20px;text-align:center;color:var(--muted)}
+.notice{border:1px dashed color-mix(in srgb,var(--danger) 55%,var(--line));border-radius:10px;padding:10px 14px;font-size:.85rem;color:var(--muted)}
+.notice b{color:var(--danger)}
 
 /* pills and status */
 .pill{display:inline-block;font-size:.85rem;font-weight:700;padding:2px 12px;border-radius:999px;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 42%,transparent)}
@@ -94,6 +103,8 @@ textarea{resize:vertical;min-height:88px}
 .st-assigned{--c:var(--s-assigned)}
 .st-hold{--c:var(--s-hold)}
 .st-closed{--c:var(--s-closed)}
+.st-rejected{--c:var(--s-rejected)}
+.pr-low{--c:var(--p-low)} .pr-medium{--c:var(--p-medium)} .pr-high{--c:var(--p-high)} .pr-urgent{--c:var(--p-urgent)}
 
 /* segmented + chips */
 .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
@@ -102,12 +113,24 @@ textarea{resize:vertical;min-height:88px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{font:inherit;font-size:.9rem;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:.3rem .85rem;cursor:pointer;min-height:36px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+
+/* dashboard */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat .n{font-size:1.7rem;font-weight:700}
+.stat .l{color:var(--muted);font-size:.85rem}
+.bars{display:grid;gap:8px}
+.barrow{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;font-size:.9rem}
+.bartrack{background:var(--surface-2);border-radius:6px;height:10px;overflow:hidden}
+.barfill{height:100%;background:var(--primary);border-radius:6px}
 
 /* case rows */
 .list{display:grid;gap:10px}
 .row{font:inherit;text-align:left;color:inherit;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center}
 .row:hover{border-color:var(--primary)}
 .row-main{display:grid;gap:2px;min-width:0}
+.row-num{color:var(--muted);font-size:.8rem;font-weight:700;letter-spacing:.02em}
 .row-title{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
 .row-meta{color:var(--muted);font-size:.9rem}
 .row-side{display:grid;gap:6px;justify-items:end;flex:none}
@@ -136,25 +159,26 @@ textarea{resize:vertical;min-height:88px}
 .entry .meta{font-size:.85rem;color:var(--muted)}
 .entry p{white-space:pre-wrap;overflow-wrap:anywhere}
 
-/* rating */
-.rate{font-weight:700;font-size:1.05rem;color:var(--rc)}
-.rate small{font-size:.75em;color:var(--muted)}
-.rate-low{--rc:var(--r-low)} .rate-mid{--rc:var(--r-mid)} .rate-high{--rc:var(--r-high)}
-.bigrate{font-size:2.4rem;font-weight:700;line-height:1;color:var(--rc)}
-.scale{display:flex;gap:6px;flex-wrap:wrap}
-.scale button{font:inherit;font-weight:700;width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.scale button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.scale button:hover{border-color:var(--primary)}
+/* feedback */
+.stars{display:flex;gap:6px;flex-wrap:wrap}
+.stars button{font:inherit;font-weight:700;padding:.5rem .9rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}
+.stars button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.stars button:hover{border-color:var(--primary)}
+.fbscore{font-size:1.6rem;font-weight:700}
 
 /* auth */
 .auth{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center;min-height:calc(100vh - 40px);padding-top:32px;padding-bottom:40px}
-.auth h1{font-size:2.4rem;margin:18px 0 12px}
-.auth .lead{font-size:1.1rem;max-width:34ch}
+.auth h1{font-size:2.2rem;margin:18px 0 12px}
+.auth .lead{font-size:1.1rem;max-width:38ch}
 .tabs{display:flex;gap:6px;margin-bottom:6px}
 
-/* staff list */
+/* staff / people */
 .people{display:grid;gap:8px}
-.person{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.person{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.person-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.status-badge{font-size:.78rem;font-weight:700;padding:2px 10px;border-radius:999px;border:1px solid var(--line)}
+.status-active{color:var(--s-closed);border-color:color-mix(in srgb,var(--s-closed) 45%,var(--line))}
+.status-disabled{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
 
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:90vw}
@@ -162,12 +186,14 @@ textarea{resize:vertical;min-height:88px}
 
 @media (max-width:760px){
   .auth{grid-template-columns:1fr;gap:20px;min-height:0}
-  .auth h1{font-size:1.9rem}
+  .auth h1{font-size:1.8rem}
   .two{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
   h1{font-size:1.6rem}
   .row{flex-direction:column;align-items:flex-start}
   .row-side{justify-items:start;grid-auto-flow:column;align-items:center}
-  .steps li{font-size:.75rem}
+  .steps li{font-size:.72rem}
+  .barrow{grid-template-columns:100px 1fr 30px;font-size:.82rem}
 }
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
@@ -180,10 +206,13 @@ textarea{resize:vertical;min-height:88px}
 (function(){
 'use strict';
 
-/* ---------- storage (browser localStorage, in-memory fallback) ---------- */
-var P = 'cpcr2_';
+// ===============================
+// STORAGE MANAGEMENT
+// ===============================
+var P = 'cpcr2_'; // unchanged from the previous version so existing browser data is not orphaned
 var mem = {};
-var persistent = true;
+var storageStatus = 'full'; // 'full' | 'idb-only' | 'none'
+
 var store = {
   get: function(k, d){
     try { var v = localStorage.getItem(P + k); return v === null ? d : JSON.parse(v); }
@@ -200,13 +229,12 @@ var store = {
   }
 };
 
-/* ---------- second copy in IndexedDB (restores data if localStorage was wiped) ---------- */
 var dbp = null;
 function timeout(ms){ return new Promise(function(r){ setTimeout(function(){ r(undefined); }, ms); }); }
 function db(){
   if(!dbp) dbp = new Promise(function(res){
     try {
-      var r = indexedDB.open('cpcr2', 1);
+      var r = indexedDB.open('cpcr2', 1); // unchanged from the previous version so existing snapshots are not orphaned
       r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
       r.onsuccess = function(){ res(r.result); };
       r.onerror = function(){ res(null); };
@@ -236,21 +264,82 @@ var idb = {
 };
 function mirror(){ idb.set('snapshot', { users: users, cases: cases, session: store.get('session', null), ts: Date.now() }); }
 
-/* ---------- state ---------- */
-var users = [], cases = [], me = null;
-var ui = { view:'cases', scope:'mine', state:'all', q:'', caseId:null, from:'cases', auth:'login', confirmClose:false, confirmReset:false };
-var STEPS = ['Reported','Under review','Assigned','Closed'];
-var SLUG = { 'Reported':'reported', 'Under review':'review', 'Assigned':'assigned', 'On hold':'hold', 'Closed':'closed' };
-var ROLE = { user:'Regular user', officer:'Case officer', admin:'Admin' };
+function validArr(a){ return Array.isArray(a); }
 
-function load(){ users = store.get('users', []); cases = store.get('cases', []); }
+async function load(){
+  var lsUsers = store.get('users', null);
+  var lsCases = store.get('cases', null);
+  if(validArr(lsUsers) && lsUsers.length && validArr(lsCases)){
+    users = lsUsers; cases = lsCases;
+    storageStatus = (storageStatus === 'none') ? 'idb-only' : storageStatus;
+    return;
+  }
+  // localStorage missing or malformed: try the IndexedDB snapshot before giving up
+  var snap = await idb.get('snapshot');
+  if(snap && validArr(snap.users) && snap.users.length && validArr(snap.cases)){
+    users = snap.users; cases = snap.cases;
+    store.set('users', users); store.set('cases', cases);
+    if(snap.session) store.set('session', snap.session);
+    return;
+  }
+  users = []; cases = [];
+}
 function save(){
   var a = store.set('users', users), b = store.set('cases', cases);
-  if(!(a && b)) persistent = false;
-  mirror();
+  var probeOk = (function(){ try { localStorage.setItem(P + 'probe', '1'); localStorage.removeItem(P + 'probe'); return true; } catch(e){ return false; } })();
+  idb.set('snapshot', { users: users, cases: cases, session: store.get('session', null), ts: Date.now() }).then(function(ok){
+    storageStatus = probeOk ? 'full' : (ok ? 'idb-only' : 'none');
+  });
+  if(!probeOk) storageStatus = 'idb-only';
 }
 
-/* ---------- helpers ---------- */
+// migrate old/incomplete case records so nothing crashes and nothing is lost
+function nextCaseNumber(){
+  var max = 0;
+  cases.forEach(function(c){
+    var m = /^CASE-(\d+)$/.exec(c.caseNumber || '');
+    if(m){ var n = parseInt(m[1], 10); if(n > max) max = n; }
+  });
+  return 'CASE-' + String(max + 1).padStart(4, '0');
+}
+function migrateCases(){
+  var changed = false;
+  cases.forEach(function(c){
+    if(!c.caseNumber || cases.filter(function(x){ return x.caseNumber === c.caseNumber; }).length > 1){ c.caseNumber = nextCaseNumber(); changed = true; }
+    if(!c.priority) { c.priority = 'Medium'; changed = true; }
+    if(!c.abuseType) { c.abuseType = 'Other'; changed = true; }
+    if(c.age == null) { c.age = ''; changed = true; }
+    if(!c.gender) { c.gender = ''; changed = true; }
+    if(!c.incidentLocation) { c.incidentLocation = ''; changed = true; }
+    if(!c.incidentDate) { c.incidentDate = ''; changed = true; }
+    if(!c.incidentTime) { c.incidentTime = ''; changed = true; }
+    if(!c.status || !SLUG[c.status]) { c.status = 'Reported'; changed = true; }
+    if(!validArr(c.history)) { c.history = []; changed = true; }
+    if(!validArr(c.logs)) { c.logs = []; changed = true; }
+    if(c.feedback === undefined) { c.feedback = null; changed = true; }
+    if(c.closureNote === undefined) { c.closureNote = ''; changed = true; }
+    if(c.holdResumeDate === undefined) { c.holdResumeDate = ''; changed = true; }
+    if(c.rejectReason === undefined) { c.rejectReason = ''; changed = true; }
+  });
+  if(changed) save();
+}
+
+// ===============================
+// APP STATE
+// ===============================
+var users = [], cases = [], me = null;
+var ui = { view:'dashboard', scope:'mine', state:'all', abuseFilter:'all', prioFilter:'all', officerFilter:'all', q:'',
+  caseId:null, from:'cases', auth:'login', editing:false,
+  confirmClose:false, confirmReset:false, confirmImport:null, confirmReject:false,
+  pendingReport:null, resetPwFor:null };
+var STEPS = ['Reported','Under review','Assigned','Closed'];
+var SLUG = { 'Reported':'reported', 'Under review':'review', 'Assigned':'assigned', 'On hold':'hold', 'Rejected':'rejected', 'Closed':'closed' };
+var ROLE = { user:'Regular user', officer:'Case officer', admin:'Admin' };
+var ABUSE_TYPES = ['Physical Abuse','Sexual Abuse','Emotional / Psychological Abuse','Neglect','Child Exploitation','Other'];
+var PRIORITIES = ['Low','Medium','High','Urgent'];
+var RELATIONSHIPS = ['Parent','Guardian','Relative','Teacher','Neighbour','Friend','Professional','Other'];
+var FEEDBACK_LABELS = { 1:'Very Poor', 2:'Poor', 3:'Fair', 4:'Good', 5:'Very Good' };
+
 function esc(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -258,65 +347,45 @@ function esc(s){
 }
 function uid(){ return 'x' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36); }
 function fmt(ts){
+  if(!ts) return '—';
   try { return new Date(ts).toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' }); }
   catch(e){ return new Date(ts).toString(); }
 }
 function userById(id){ return users.filter(function(u){ return u.id === id; })[0] || null; }
 function nameOf(id){ var u = userById(id); return u ? u.name : 'Unknown user'; }
+
+// ===============================
+// AUTHENTICATION
+// ===============================
 async function hash(u, p){
+  if(!(window.crypto && window.crypto.subtle)) throw new Error('no-crypto');
   var s = u.toLowerCase() + ':' + p;
-  try {
-    var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-    return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
-  } catch(e){ return 'plain:' + s; }
+  var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
 }
 var toastTimer;
 function toast(s){
   var el = document.getElementById('toast');
   el.textContent = s; el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
-}
-function pill(status){ return '<span class="pill st-' + SLUG[status] + '">' + esc(status) + '</span>'; }
-function rateClass(v){ return v < 5 ? 'rate-low' : (v < 9 ? 'rate-mid' : 'rate-high'); }
-function avgOf(c){
-  var vals = Object.keys(c.ratings || {}).map(function(k){ return c.ratings[k]; });
-  if(!vals.length) return null;
-  return { avg: vals.reduce(function(a,b){ return a + b; }, 0) / vals.length, n: vals.length };
-}
-function isStaff(){ return me && (me.role === 'admin' || me.role === 'officer'); }
-function canFull(c){ return me.role === 'admin' || c.reporterId === me.id || c.assigneeId === me.id; }
-function isHandler(c){ return me.role === 'admin' || c.assigneeId === me.id; }
-function defaultScope(){ return me.role === 'admin' ? 'all' : (me.role === 'officer' ? 'assigned' : 'mine'); }
-function resetUi(){
-  ui.view = 'cases'; ui.scope = defaultScope(); ui.state = 'all'; ui.q = '';
-  ui.caseId = null; ui.confirmClose = false; ui.confirmReset = false;
-}
-function go(view, extra){
-  ui.view = view; ui.confirmClose = false; ui.confirmReset = false;
-  if(extra){ for(var k in extra) ui[k] = extra[k]; }
-  render(); window.scrollTo(0, 0);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2800);
 }
 
-/* ---------- boot ---------- */
 async function boot(){
-  try { localStorage.setItem(P + 'probe', '1'); localStorage.removeItem(P + 'probe'); persistent = true; }
-  catch(e){ persistent = false; }
   try { if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){}); } catch(e){}
-  load();
+  await load();
   if(!users.length){
-    var snap = await idb.get('snapshot');
-    if(snap && snap.users && snap.users.length){
-      users = snap.users; cases = snap.cases || []; save();
-      if(snap.session) store.set('session', snap.session);
-    }
-  }
-  if(!users.length){
-    users.push({ id: uid(), name:'System Admin', username:'admin', pass: await hash('admin','admin123'), role:'admin', createdAt: Date.now() });
-    save();
+    try {
+      users.push({ id: uid(), name:'System Admin', username:'admin', pass: await hash('admin','admin123'),
+        role:'admin', status:'active', email:'', phone:'', relationship:'', createdAt: Date.now() });
+      save();
+    } catch(e){ toast('This browser cannot create secure accounts. Try a modern browser.'); }
+  } else {
+    migrateCases();
   }
   var sid = store.get('session', null);
   me = userById(sid);
+  if(me && me.status === 'disabled'){ me = null; store.remove('session'); }
   if(me) resetUi();
   render();
 }
@@ -325,12 +394,35 @@ window.addEventListener('storage', function(e){
   if(!e.key || e.key.indexOf(P) !== 0) return;
   var t = document.activeElement && document.activeElement.tagName;
   if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
-  load();
-  if(me){ me = userById(me.id); }
-  render();
+  load().then(function(){ if(me) me = userById(me.id); render(); });
 });
 
-/* ---------- render ---------- */
+// ===============================
+// CASE MANAGEMENT — permissions & helpers
+// ===============================
+function isStaff(){ return me && (me.role === 'admin' || me.role === 'officer'); }
+function canFull(c){ return me.role === 'admin' || c.reporterId === me.id || c.assigneeId === me.id; }
+function isHandler(c){ return me.role === 'admin' || c.assigneeId === me.id; }
+function canRate(c){ return c.reporterId === me.id && c.assigneeId !== me.id; }
+function defaultScope(){ return me.role === 'admin' ? 'all' : (me.role === 'officer' ? 'assigned' : 'mine'); }
+function resetUi(){
+  ui.view = 'dashboard'; ui.scope = defaultScope(); ui.state = 'all'; ui.abuseFilter = 'all'; ui.prioFilter = 'all'; ui.officerFilter = 'all'; ui.q = '';
+  ui.caseId = null; ui.editing = false; ui.confirmClose = false; ui.confirmReset = false; ui.confirmImport = null;
+  ui.confirmReject = false; ui.pendingReport = null; ui.resetPwFor = null;
+}
+function go(view, extra){
+  ui.view = view; ui.confirmClose = false; ui.confirmReset = false; ui.confirmImport = null; ui.confirmReject = false; ui.editing = false;
+  if(extra){ for(var k in extra) ui[k] = extra[k]; }
+  render(); window.scrollTo(0, 0);
+}
+function accessibleCases(){
+  if(me.role === 'admin') return cases.slice();
+  return cases.filter(function(c){ return c.reporterId === me.id || c.assigneeId === me.id; });
+}
+
+// ===============================
+// UI RENDERING
+// ===============================
 function render(){
   var app = document.getElementById('app');
   if(!me){ app.innerHTML = authView(); return; }
@@ -338,11 +430,17 @@ function render(){
   if(ui.view === 'report') body = reportView();
   else if(ui.view === 'closed') body = closedView();
   else if(ui.view === 'staff' && me.role === 'admin') body = staffView();
+  else if(ui.view === 'backup' && me.role === 'admin') body = backupView();
+  else if(ui.view === 'profile') body = profileView();
   else if(ui.view === 'case') body = caseView();
-  else body = casesView();
-  app.innerHTML = topbar() + (persistent ? '' :
-    '<div class="wrap" style="padding-top:14px"><div class="banner">This browser is blocking storage for this page, so your data will be lost on reload. This happens in private windows, previews and some in-app viewers. Open the file in a normal browser window, or use Export backup on the Staff accounts page.</div></div>') + body;
+  else if(ui.view === 'cases') body = casesView();
+  else body = dashboardView();
+  var band = '';
+  if(storageStatus === 'idb-only') band = '<div class="wrap" style="padding-top:14px"><div class="banner">Primary browser storage is unavailable. Backup browser storage is being used, so your data should still be here next time.</div></div>';
+  else if(storageStatus === 'none') band = '<div class="wrap" style="padding-top:14px"><div class="banner warn">Browser storage is unavailable. Changes may not persist after reload — use Export backup on the Backup &amp; Restore page.</div></div>';
+  app.innerHTML = topbar() + band + body;
   if(ui.view === 'cases') renderList();
+  else if(ui.view === 'closed') renderClosedList();
 }
 
 function topbar(){
@@ -351,15 +449,25 @@ function topbar(){
     var cur = (ui.view === v || (ui.view === 'case' && ui.from === v)) ? ' aria-current="page"' : '';
     return '<button data-action="nav" data-v="' + v + '"' + cur + '>' + label + (extra || '') + '</button>';
   }
+  var items = nb('dashboard', 'Dashboard');
+  if(me.role === 'admin') items += nb('cases', 'All cases', newCount ? '<span class="count" title="Reports waiting for review">' + newCount + '</span>' : '');
+  else if(me.role === 'officer') items += nb('cases', 'My cases');
+  else items += nb('cases', 'My cases');
+  if(me.role !== 'officer') items += nb('report', 'Report a case');
+  items += nb('closed', 'Closed cases');
+  if(me.role === 'admin'){ items += nb('staff', 'Staff accounts'); items += nb('backup', 'Backup &amp; restore'); }
+  items += nb('profile', 'Profile');
   return '<header class="topbar"><div class="wrap bar">' +
-    '<div class="brand"><span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>Child Safety Case System</div>' +
+    '<div class="brand"><span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>' +
+    '<span>Child Abuse Management System<span class="sub">Academic prototype — browser-only demo</span></span></div>' +
     '<div class="who"><span class="name">' + esc(me.name) + '</span><span class="role role-' + me.role + '">' + ROLE[me.role] + '</span>' +
     '<button class="btn ghost sm" data-action="logout">Log out</button></div></div>' +
-    '<nav class="wrap nav" aria-label="Main">' +
-    nb('cases', 'Cases', newCount ? '<span class="count" title="Reports waiting for review">' + newCount + '</span>' : '') +
-    nb('report', 'Report a case') + nb('closed', 'Closed cases') +
-    (me.role === 'admin' ? nb('staff', 'Staff accounts') : '') +
-    '</nav></header>';
+    '<nav class="wrap nav" aria-label="Main">' + items + '</nav></header>';
+}
+
+function pwField(id, name, label, required, autoc){
+  return '<label for="' + id + '">' + label + '</label><div class="pwrow"><input id="' + id + '" name="' + name + '" type="password" autocomplete="' + autoc + '"' + (required ? ' required' : '') + '>' +
+    '<button type="button" class="pwtoggle" data-action="togglepw" data-target="' + id + '">Show</button></div>';
 }
 
 /* ----- auth ----- */
@@ -367,25 +475,79 @@ function authView(){
   var login = ui.auth === 'login';
   return '<main class="wrap auth"><div>' +
     '<span class="mark" style="width:48px;height:48px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>' +
-    '<h1>Report a concern about a child and follow what happens next.</h1>' +
-    '<p class="lead muted">Anyone can report a case. Admins review each report and assign it to a case officer, who keeps the case moving until it is closed.</p>' +
-    '<p class="hint" style="margin-top:18px">This is a demo. Everything is saved in this browser only, so please do not enter real names or details. Demo admin login: <b>admin</b> / <b>admin123</b>.</p>' +
+    '<h1>Child Abuse Management System</h1>' +
+    '<p class="lead muted">Registered users can report and track child abuse cases. An admin reviews each report and assigns it to a case officer, who keeps the case moving until it is closed.</p>' +
+    '<div class="notice" style="margin-top:18px"><b>DEMO SYSTEM.</b> Do not enter real child-abuse or personally identifiable information. Use fictional demonstration data only. Demo admin login: <b>admin</b> / <b>admin123</b>.</div>' +
     '</div>' +
     '<div class="card"><div class="tabs"><div class="seg" role="group" aria-label="Account">' +
     '<button data-action="authtab" data-v="login" aria-pressed="' + login + '">Log in</button>' +
     '<button data-action="authtab" data-v="register" aria-pressed="' + !login + '">Create account</button></div></div>' +
     (login ?
       '<form data-form="login" autocomplete="on"><label for="lu">Username</label><input id="lu" name="username" autocomplete="username" required>' +
-      '<label for="lp">Password</label><input id="lp" name="password" type="password" autocomplete="current-password" required>' +
+      pwField('lp','password','Password',true,'current-password') +
       '<div class="err" id="autherr" role="alert"></div><button class="btn primary" style="width:100%">Log in</button></form>'
     :
-      '<form data-form="register" autocomplete="on"><label for="rn">Your name</label><input id="rn" name="name" autocomplete="name" required>' +
-      '<label for="ru">Username</label><input id="ru" name="username" autocomplete="username" required>' +
+      '<form data-form="register" autocomplete="on"><label for="rn">Your name</label><input id="rn" name="name" maxlength="120" autocomplete="name" required>' +
+      '<label for="ru">Username</label><input id="ru" name="username" maxlength="60" autocomplete="username" required>' +
       '<p class="hint">At least 3 characters. Letters, numbers, dots, dashes and underscores.</p>' +
-      '<label for="rp">Password</label><input id="rp" name="password" type="password" autocomplete="new-password" required>' +
-      '<p class="hint">At least 6 characters.</p>' +
+      pwField('rp','password','Password',true,'new-password') +
+      pwField('rp2','confirm','Confirm password',true,'new-password') +
+      '<p class="hint">At least 8 characters.</p>' +
+      '<div class="grid2"><div><label for="re">Email (optional)</label><input id="re" name="email" type="email" maxlength="200"></div>' +
+      '<div><label for="rph">Phone (optional)</label><input id="rph" name="phone" maxlength="40"></div></div>' +
+      '<label for="rrel">Relationship to child, if reporting one (optional)</label><select id="rrel" name="relationship"><option value="">Prefer not to say</option>' +
+      RELATIONSHIPS.map(function(r){ return '<option value="' + r + '">' + r + '</option>'; }).join('') + '</select>' +
       '<div class="err" id="autherr" role="alert"></div><button class="btn primary" style="width:100%">Create account</button></form>') +
     '</div></main>';
+}
+
+/* ----- dashboard ----- */
+function statCard(n, l){ return '<div class="stat"><div class="n">' + n + '</div><div class="l">' + esc(l) + '</div></div>'; }
+function breakdown(list, keyFn, keys, title){
+  var counts = {}; keys.forEach(function(k){ counts[k] = 0; });
+  list.forEach(function(c){ var k = keyFn(c); if(counts[k] === undefined) counts[k] = 0; counts[k]++; });
+  var max = Math.max.apply(null, keys.map(function(k){ return counts[k]; }).concat([1]));
+  return '<div class="card"><h2>' + esc(title) + '</h2><div class="bars">' + keys.map(function(k){
+    var n = counts[k];
+    return '<div class="barrow"><span class="small">' + esc(k) + '</span><span class="bartrack"><span class="barfill" style="width:' + (n / max * 100) + '%"></span></span><span class="small" style="text-align:right">' + n + '</span></div>';
+  }).join('') + '</div></div>';
+}
+function dashboardView(){
+  var mine = accessibleCases();
+  var h = '<main class="wrap page"><h1>Dashboard</h1>';
+  if(me.role === 'admin'){
+    var all = cases;
+    h += '<div class="stats">' +
+      statCard(all.length, 'Total cases') +
+      statCard(all.filter(function(c){ return c.status === 'Reported'; }).length, 'New reports') +
+      statCard(all.filter(function(c){ return c.status === 'Under review'; }).length, 'Under review') +
+      statCard(all.filter(function(c){ return c.status === 'Assigned'; }).length, 'Assigned') +
+      statCard(all.filter(function(c){ return c.status === 'On hold'; }).length, 'On hold') +
+      statCard(all.filter(function(c){ return c.status === 'Closed'; }).length, 'Closed') +
+      statCard(users.filter(function(u){ return u.role === 'officer'; }).length, 'Total officers') +
+      statCard(users.filter(function(u){ return u.role === 'user'; }).length, 'Total users') + '</div>';
+  } else if(me.role === 'officer'){
+    var assigned = cases.filter(function(c){ return c.assigneeId === me.id; });
+    h += '<div class="stats">' +
+      statCard(assigned.length, 'Assigned to me') +
+      statCard(assigned.filter(function(c){ return c.status === 'Under review'; }).length, 'Under review') +
+      statCard(assigned.filter(function(c){ return c.status === 'On hold'; }).length, 'On hold') +
+      statCard(assigned.filter(function(c){ return c.status === 'Closed'; }).length, 'Closed') + '</div>';
+  } else {
+    var own = cases.filter(function(c){ return c.reporterId === me.id; });
+    h += '<div class="stats">' +
+      statCard(own.length, 'My reported cases') +
+      statCard(own.filter(function(c){ return c.status !== 'Closed' && c.status !== 'Rejected'; }).length, 'My open cases') +
+      statCard(own.filter(function(c){ return c.status === 'Closed'; }).length, 'My closed cases') + '</div>';
+  }
+  if(mine.length){
+    h += '<div class="two">' +
+      breakdown(mine, function(c){ return c.abuseType || 'Other'; }, ABUSE_TYPES, 'Cases by abuse type') +
+      breakdown(mine, function(c){ return c.priority || 'Medium'; }, PRIORITIES, 'Cases by priority') + '</div>';
+  } else {
+    h += '<div class="empty">No case data to summarize yet.</div>';
+  }
+  return h + '</main>';
 }
 
 /* ----- cases list ----- */
@@ -399,37 +561,58 @@ function scopeCases(){
   if(ui.scope === 'assigned') return cases.filter(function(c){ return c.assigneeId === me.id; });
   return cases.filter(function(c){ return c.reporterId === me.id; });
 }
+function officerOptions(){
+  return users.filter(function(u){ return u.role === 'officer' || u.role === 'admin'; });
+}
 function casesView(){
   var sc = scopesFor();
   var seg = sc.length > 1 ? '<div class="seg" role="group" aria-label="Which cases">' + sc.map(function(s){
     return '<button data-action="scope" data-v="' + s[0] + '" aria-pressed="' + (ui.scope === s[0]) + '">' + s[1] + '</button>';
   }).join('') + '</div>' : '';
-  return '<main class="wrap page"><div class="pagehead"><h1>Cases</h1>' +
-    '<button class="btn primary" data-action="nav" data-v="report">Report a case</button></div>' + seg +
-    '<div><label for="q" style="margin-top:0">Search</label><input type="search" id="q" placeholder="Title or child name" value="' + esc(ui.q) + '"></div>' +
+  var officerSelect = me.role === 'admin' ? '<div><label for="fo">Assigned officer</label><select id="fo" data-filter="officer"><option value="all">Any</option>' +
+    officerOptions().map(function(u){ return '<option value="' + u.id + '"' + (ui.officerFilter === u.id ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select></div>' : '';
+  return '<main class="wrap page"><div class="pagehead"><h1>' + (me.role === 'admin' ? 'All cases' : 'My cases') + '</h1>' +
+    (me.role !== 'officer' ? '<button class="btn primary" data-action="nav" data-v="report">Report a case</button>' : '') + '</div>' + seg +
+    '<div class="filters">' +
+    '<div><label for="q" style="margin-top:0">Search</label><input type="search" id="q" placeholder="Case number, title, child, type, location" value="' + esc(ui.q) + '"></div>' +
+    '<div><label for="fa">Abuse type</label><select id="fa" data-filter="abuse"><option value="all">Any</option>' + ABUSE_TYPES.map(function(t){ return '<option value="' + t + '"' + (ui.abuseFilter === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
+    '<div><label for="fp">Priority</label><select id="fp" data-filter="priority"><option value="all">Any</option>' + PRIORITIES.map(function(t){ return '<option value="' + t + '"' + (ui.prioFilter === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
+    officerSelect + '</div>' +
     '<div id="listwrap" style="display:grid;gap:16px"></div></main>';
 }
+function priorityPill(c){ return '<span class="pill pr-' + c.priority.toLowerCase() + '">' + esc(c.priority) + '</span>'; }
 function caseRow(c){
-  var meta = 'Child: ' + esc(c.childName) + '. Reported by ' + esc(nameOf(c.reporterId)) + ' on ' + fmt(c.createdAt) + '.' +
+  var meta = 'Child: ' + esc(c.childName) + '. ' + esc(c.abuseType) + '. Reported by ' + esc(nameOf(c.reporterId)) + ' on ' + fmt(c.createdAt) + '.' +
     (c.assigneeId ? ' Handled by ' + esc(nameOf(c.assigneeId)) + '.' : '');
   return '<button class="row" data-action="open" data-id="' + c.id + '" data-from="cases"><span class="row-main">' +
-    '<span class="row-title">' + esc(c.title) + '</span><span class="row-meta">' + meta + '</span></span>' +
-    '<span class="row-side">' + pill(c.status) + '</span></button>';
+    '<span class="row-num">' + esc(c.caseNumber) + '</span><span class="row-title">' + esc(c.title) + '</span><span class="row-meta">' + meta + '</span></span>' +
+    '<span class="row-side">' + priorityPill(c) + statusPill(c.status) + '</span></button>';
+}
+function statusPill(status){ return '<span class="pill st-' + SLUG[status] + '">' + esc(status) + '</span>'; }
+function matchesFilters(c, q){
+  if(ui.abuseFilter !== 'all' && c.abuseType !== ui.abuseFilter) return false;
+  if(ui.prioFilter !== 'all' && c.priority !== ui.prioFilter) return false;
+  if(ui.officerFilter !== 'all' && c.assigneeId !== ui.officerFilter) return false;
+  if(q){
+    var hay = (c.caseNumber + ' ' + c.title + ' ' + c.childName + ' ' + c.abuseType + ' ' + c.incidentLocation).toLowerCase();
+    if(hay.indexOf(q) === -1) return false;
+  }
+  return true;
 }
 function renderList(){
   var el = document.getElementById('listwrap'); if(!el) return;
   var base = scopeCases();
-  var q = ui.q.trim().toLowerCase();
-  if(q) base = base.filter(function(c){ return (c.title + ' ' + c.childName).toLowerCase().indexOf(q) > -1; });
-  var chips = [['all','All (' + base.length + ')']].concat(['Reported','Under review','Assigned','On hold','Closed'].map(function(s){
-    return [s, s + ' (' + base.filter(function(c){ return c.status === s; }).length + ')'];
+  var q = ui.q.trim().toLowerCase().replace(/\s+/g, ' ');
+  var filtered = base.filter(function(c){ return matchesFilters(c, q); });
+  var chips = [['all','All (' + filtered.length + ')']].concat(['Reported','Under review','Assigned','On hold','Rejected','Closed'].map(function(s){
+    return [s, s + ' (' + filtered.filter(function(c){ return c.status === s; }).length + ')'];
   }));
-  var shown = ui.state === 'all' ? base : base.filter(function(c){ return c.status === ui.state; });
+  var shown = ui.state === 'all' ? filtered : filtered.filter(function(c){ return c.status === ui.state; });
   shown.sort(function(a,b){ return b.updatedAt - a.updatedAt; });
   var empty;
   if(!shown.length){
-    empty = '<div class="empty">' + (base.length || q ?
-      'No cases match. Try a different search or state.' :
+    empty = '<div class="empty">' + (base.length ?
+      'No cases match your search or filters.' :
       (ui.scope === 'mine' ? 'You have not reported any cases yet. Use “Report a case” to start one.' :
        ui.scope === 'assigned' ? 'No cases are assigned to you yet.' : 'No cases have been reported yet.')) + '</div>';
   }
@@ -439,29 +622,72 @@ function renderList(){
 }
 
 /* ----- report ----- */
+function reportFields(vals){
+  vals = vals || {};
+  function v(k, d){ return vals[k] != null ? vals[k] : (d || ''); }
+  return '<div><label for="t" style="margin-top:0">Title</label><input id="t" name="title" maxlength="150" value="' + esc(v('title')) + '" required>' +
+    '<h3 style="margin-top:10px">Child information</h3>' +
+    '<div class="grid2"><div><label for="cn">Child name</label><input id="cn" name="child" maxlength="120" value="' + esc(v('childName')) + '" required></div>' +
+    '<div><label for="ca">Age</label><input id="ca" name="age" type="number" min="0" max="17" value="' + esc(v('age')) + '" required></div></div>' +
+    '<label for="cg">Gender</label><select id="cg" name="gender"><option value="">Prefer not to say</option>' +
+    ['Male','Female','Other'].map(function(g){ return '<option value="' + g + '"' + (v('gender') === g ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
+    '<h3 style="margin-top:10px">Incident information</h3>' +
+    '<label for="cab">Type of abuse</label><select id="cab" name="abuseType" required><option value="" disabled' + (v('abuseType') ? '' : ' selected') + '>Choose one</option>' +
+    ABUSE_TYPES.map(function(t){ return '<option value="' + t + '"' + (v('abuseType') === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+    '<label for="cpr">Priority</label><select id="cpr" name="priority">' +
+    PRIORITIES.map(function(t){ return '<option value="' + t + '"' + ((v('priority') || 'Medium') === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+    '<div class="grid2"><div><label for="cid">Incident date</label><input id="cid" name="incidentDate" type="date" value="' + esc(v('incidentDate')) + '" required></div>' +
+    '<div><label for="cit">Incident time (optional)</label><input id="cit" name="incidentTime" type="time" value="' + esc(v('incidentTime')) + '"></div></div>' +
+    '<label for="cil">Incident location</label><input id="cil" name="incidentLocation" maxlength="200" value="' + esc(v('incidentLocation')) + '" required>' +
+    '<label for="d">Description — what did you see?</label><textarea id="d" name="desc" rows="7" maxlength="5000" placeholder="What happened, in your own words." required>' + esc(v('description')) + '</textarea></div>';
+}
 function reportView(){
   return '<main class="wrap page"><h1>Report a case</h1>' +
-    '<form class="card" data-form="report"><p class="muted">Tell us what you saw. An admin will look at your report, and you can follow its state under Cases.</p>' +
-    '<div><label for="t" style="margin-top:0">Title</label><input id="t" name="title" maxlength="120" placeholder="A short summary" required>' +
-    '<label for="cn">Name of the child involved</label><input id="cn" name="child" maxlength="120" required>' +
-    '<label for="d">What did you see?</label><textarea id="d" name="desc" rows="7" placeholder="What happened, where, and when." required></textarea></div>' +
+    '<form class="card" data-form="report"><p class="muted">Tell us what you saw. An admin will look at your report, and you can follow its state under My cases.</p>' +
+    '<div class="notice"><b>DEMO SYSTEM.</b> Use fictional demonstration data only — do not enter real child-abuse information.</div>' +
+    reportFields() +
     '<div class="err" id="reperr" role="alert"></div>' +
+    '<div id="dupwrap"></div>' +
     '<div class="btnrow"><button class="btn primary">Submit report</button><button type="button" class="btn" data-action="nav" data-v="cases">Cancel</button></div></form></main>';
 }
+function editReportView(c){
+  return '<main class="wrap page"><div><button class="btn sm" data-action="open" data-id="' + c.id + '" data-from="' + ui.from + '">Back to case</button></div>' +
+    '<h1>Edit report — ' + esc(c.caseNumber) + '</h1>' +
+    '<form class="card" data-form="editreport" data-id="' + c.id + '"><p class="muted">You can edit your report only while it is still “Reported” and has not yet been seen by an admin.</p>' +
+    reportFields({ title:c.title, childName:c.childName, age:c.age, gender:c.gender, abuseType:c.abuseType, priority:c.priority,
+      incidentDate:c.incidentDate, incidentTime:c.incidentTime, incidentLocation:c.incidentLocation, description:c.description }) +
+    '<div class="err" id="editerr" role="alert"></div>' +
+    '<div class="btnrow"><button class="btn primary">Save changes</button><button type="button" class="btn" data-action="open" data-id="' + c.id + '" data-from="' + ui.from + '">Cancel</button></div></form></main>';
+}
 
-/* ----- closed cases ----- */
+/* ----- closed cases (scoped by role — see fix in section 21 of the spec) ----- */
+function closedScope(){
+  if(me.role === 'admin') return cases.filter(function(c){ return c.status === 'Closed'; });
+  if(me.role === 'officer') return cases.filter(function(c){ return c.status === 'Closed' && c.assigneeId === me.id; });
+  return cases.filter(function(c){ return c.status === 'Closed' && c.reporterId === me.id; });
+}
 function closedView(){
-  var list = cases.filter(function(c){ return c.status === 'Closed'; }).sort(function(a,b){ return (b.closedAt||0) - (a.closedAt||0); });
+  return '<main class="wrap page"><div><h1>Closed cases</h1><p class="muted" style="margin-top:6px">' +
+    (me.role === 'admin' ? 'Every case that has been closed.' : me.role === 'officer' ? 'Cases you handled that have been closed.' : 'Cases you reported that have been closed. Only you can leave feedback on your own case.') +
+    '</p></div><div class="filters"><div><label for="q" style="margin-top:0">Search</label><input type="search" id="q" placeholder="Case number, title, child, type, location" value="' + esc(ui.q) + '"></div></div>' +
+    '<div id="closedlistwrap"></div></main>';
+}
+function renderClosedList(){
+  var el = document.getElementById('closedlistwrap'); if(!el) return;
+  var q = (ui.q || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  var list = closedScope().filter(function(c){
+    if(!q) return true;
+    var hay = (c.caseNumber + ' ' + c.title + ' ' + c.childName + ' ' + c.abuseType + ' ' + c.incidentLocation).toLowerCase();
+    return hay.indexOf(q) > -1;
+  }).sort(function(a,b){ return (b.closedAt||0) - (a.closedAt||0); });
   var rows = list.map(function(c){
-    var r = avgOf(c), mine = (c.ratings || {})[me.id];
+    var fb = c.feedback;
     return '<button class="row" data-action="open" data-id="' + c.id + '" data-from="closed"><span class="row-main">' +
-      '<span class="row-title">' + esc(c.title) + '</span>' +
-      '<span class="row-meta">Closed ' + fmt(c.closedAt || c.updatedAt) + (c.assigneeId ? ' by ' + esc(nameOf(c.assigneeId)) : '') +
-      (mine != null ? '. You rated it ' + mine + '/10.' : '. You have not rated it yet.') + '</span></span>' +
-      '<span class="row-side">' + (r ? '<span class="rate ' + rateClass(r.avg) + '">' + r.avg.toFixed(1) + '<small>/10 from ' + r.n + '</small></span>' : '<span class="muted small">Not rated yet</span>') + '</span></button>';
+      '<span class="row-num">' + esc(c.caseNumber) + '</span><span class="row-title">' + esc(c.title) + '</span>' +
+      '<span class="row-meta">Closed ' + fmt(c.closedAt || c.updatedAt) + (c.assigneeId ? ' by ' + esc(nameOf(c.assigneeId)) : '') + '</span></span>' +
+      '<span class="row-side">' + (fb ? '<span class="pill st-closed">' + fb.rating + '/5 — ' + esc(FEEDBACK_LABELS[fb.rating]) + '</span>' : '<span class="muted small">No feedback yet</span>') + '</span></button>';
   }).join('');
-  return '<main class="wrap page"><div><h1>Closed cases</h1><p class="muted" style="margin-top:6px">Anyone with an account can see that a case was closed and rate how it was handled, from 0 to 10. Details about the child stay private.</p></div>' +
-    (rows ? '<div class="list">' + rows + '</div>' : '<div class="empty">No cases have been closed yet.</div>') + '</main>';
+  el.innerHTML = rows ? '<div class="list">' + rows + '</div>' : '<div class="empty">No closed cases to show yet.</div>';
 }
 
 /* ----- case detail ----- */
@@ -472,14 +698,15 @@ function blurb(c){
     case 'Under review': return 'An admin has seen this report and is checking that it is accurate. It is not assigned to anyone yet.';
     case 'Assigned': return 'This case is being handled by ' + who + '.';
     case 'On hold': return 'This case is paused because there is an issue to sort out first.';
-    default: return 'This case has been handled. Rate how it was handled below.';
+    case 'Rejected': return 'This report was reviewed and marked invalid or rejected.';
+    default: return 'This case has been handled.';
   }
 }
 function allowed(c){
   var tx = [], assign = false;
   if(me.role === 'admin'){
-    if(c.status === 'Reported'){ tx.push({k:'review', l:'Mark under review', p:1}); tx.push({k:'hold', l:'Put on hold'}); }
-    if(c.status === 'Under review'){ assign = true; tx.push({k:'hold', l:'Put on hold'}); }
+    if(c.status === 'Reported'){ tx.push({k:'review', l:'Mark under review', p:1}); tx.push({k:'hold', l:'Put on hold'}); tx.push({k:'reject', l:'Reject / mark invalid'}); }
+    if(c.status === 'Under review'){ assign = true; tx.push({k:'hold', l:'Put on hold'}); tx.push({k:'reject', l:'Reject / mark invalid'}); }
     if(c.status === 'Assigned'){ assign = true; tx.push({k:'close', l:'Close case', p:1}); tx.push({k:'hold', l:'Put on hold'}); }
     if(c.status === 'On hold'){ tx.push({k:'resume', l:'Resume case', p:1}); }
   } else if(c.assigneeId === me.id){
@@ -491,89 +718,114 @@ function allowed(c){
 function actionsCard(c){
   var a = allowed(c);
   if(!a.tx.length && !a.assign) return '';
-  var needNote = a.tx.some(function(t){ return t.k === 'hold'; });
-  var h = '<section class="card" aria-labelledby="ah"><h2 id="ah">Update this case</h2>' +
-    '<div><label for="actnote" style="margin-top:0">Note ' + (needNote ? '(required when putting on hold)' : '(optional)') + '</label>' +
-    '<textarea id="actnote" rows="2" placeholder="What is the reason for this change?"></textarea></div>';
+  var needHoldNote = a.tx.some(function(t){ return t.k === 'hold'; });
+  var h = '<section class="card" aria-labelledby="ah"><h2 id="ah">Update this case</h2>';
   if(a.assign){
-    var staff = users.filter(function(u){ return u.role !== 'user'; });
+    var staff = officerOptions();
     h += '<div><label for="assignsel" style="margin-top:0">' + (c.assigneeId ? 'Reassign to' : 'Assign to') + '</label><div class="inline"><select id="assignsel">' +
       staff.map(function(u){
-        var open = cases.filter(function(x){ return x.assigneeId === u.id && x.status !== 'Closed'; }).length;
+        var open = cases.filter(function(x){ return x.assigneeId === u.id && x.status !== 'Closed' && x.status !== 'Rejected'; }).length;
         var sel = (c.assigneeId ? c.assigneeId === u.id : u.id === me.id) ? ' selected' : '';
         return '<option value="' + u.id + '"' + sel + '>' + esc(u.name) + (u.id === me.id ? ' (you)' : '') + ', ' + ROLE[u.role].toLowerCase() + ', ' + open + ' open</option>';
       }).join('') + '</select><button class="btn primary" data-action="assign">' + (c.assigneeId ? 'Reassign case' : 'Assign case') + '</button></div></div>';
   }
   if(a.tx.length){
-    h += '<div class="btnrow">' + a.tx.map(function(t){
-      if(t.k === 'close' && ui.confirmClose){
-        return '<span class="muted" style="align-self:center">Closing is final and opens the case for public ratings.</span>' +
-          '<button class="btn danger" data-action="tx" data-k="close-confirmed">Yes, close case</button>' +
-          '<button class="btn" data-action="cancelclose">Cancel</button>';
+    if(ui.confirmClose){
+      h += '<div><label for="closenote" style="margin-top:0">Closure note / outcome (required)</label><textarea id="closenote" rows="3" placeholder="e.g. Case reviewed and appropriate follow-up action completed." maxlength="5000"></textarea></div>' +
+        '<div class="btnrow"><span class="muted">Closing is final and opens the case for the reporter to leave feedback.</span>' +
+        '<button class="btn danger" data-action="tx" data-k="close-confirmed">Yes, close case</button><button class="btn" data-action="cancelclose">Cancel</button></div>';
+    } else if(ui.confirmReject){
+      h += '<div><label for="rejnote" style="margin-top:0">Reason for rejecting / marking invalid (required)</label><textarea id="rejnote" rows="3" maxlength="5000"></textarea></div>' +
+        '<div class="btnrow"><button class="btn danger" data-action="tx" data-k="reject-confirmed">Confirm rejection</button><button class="btn" data-action="cancelreject">Cancel</button></div>';
+    } else {
+      var needNote = needHoldNote;
+      h += '<div><label for="actnote" style="margin-top:0">Note ' + (needNote ? '(required when putting on hold)' : '(optional)') + '</label><textarea id="actnote" rows="2" maxlength="5000" placeholder="What is the reason for this change?"></textarea></div>';
+      if(a.tx.some(function(t){ return t.k === 'hold'; })){
+        h += '<label for="holdresume">Expected resume date (optional)</label><input id="holdresume" type="date">';
       }
-      return '<button class="btn' + (t.p ? ' primary' : '') + '" data-action="tx" data-k="' + t.k + '">' + t.l + '</button>';
-    }).join('') + '</div>';
+      h += '<div class="btnrow">' + a.tx.map(function(t){
+        return '<button class="btn' + (t.p ? ' primary' : (t.k === 'reject' ? ' danger' : '')) + '" data-action="tx" data-k="' + t.k + '">' + t.l + '</button>';
+      }).join('') + '</div>';
+    }
   }
   return h + '</section>';
 }
-function ratingCard(c){
-  var r = avgOf(c), mine = (c.ratings || {})[me.id], can = c.assigneeId !== me.id;
-  var head = r ? '<div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap"><span class="bigrate ' + rateClass(r.avg) + '">' + r.avg.toFixed(1) + '</span><span class="muted">out of 10, from ' + r.n + ' rating' + (r.n === 1 ? '' : 's') + '</span></div>'
-    : '<p class="muted">No one has rated this case yet.</p>';
-  var form;
-  if(can){
-    form = '<div><p style="font-weight:700;margin-bottom:8px">' + (mine != null ? 'Your rating: ' + mine + '. Tap a number to change it.' : 'How well was this case handled? 0 is worst, 10 is best.') + '</p>' +
-      '<div class="scale" role="group" aria-label="Rate from 0 to 10">' +
-      Array.apply(null, Array(11)).map(function(_, i){ return '<button data-action="rate" data-n="' + i + '" aria-pressed="' + (mine === i) + '">' + i + '</button>'; }).join('') + '</div></div>';
-  } else form = '<p class="muted">You handled this case, so you cannot rate it.</p>';
-  return '<section class="card" aria-labelledby="rh"><h2 id="rh">How was this case handled?</h2>' + head + form + '</section>';
+function feedbackCard(c){
+  var can = canRate(c), fb = c.feedback;
+  var h = '<section class="card" aria-labelledby="fh"><h2 id="fh">Case handling feedback</h2>';
+  if(fb){
+    h += '<p><span class="fbscore">' + fb.rating + '/5</span> — ' + esc(FEEDBACK_LABELS[fb.rating]) + '</p>' +
+      (fb.comment ? '<p class="desc">' + esc(fb.comment) + '</p>' : '') +
+      '<p class="small muted">Submitted by ' + esc(nameOf(fb.by)) + ', ' + fmt(fb.date) + '.</p>';
+  } else if(can){
+    h += '<p class="muted">Only the person who reported this case can leave feedback, once.</p>' +
+      '<div class="stars" role="group" aria-label="Rate from 1 to 5">' +
+      [1,2,3,4,5].map(function(n){ return '<button data-action="pickfb" data-n="' + n + '" aria-pressed="' + (ui.fbPick === n) + '">' + n + ' — ' + FEEDBACK_LABELS[n] + '</button>'; }).join('') + '</div>' +
+      '<label for="fbcomment">Comment (optional)</label><textarea id="fbcomment" rows="2" maxlength="2000"></textarea>' +
+      '<div class="btnrow"><button class="btn primary" data-action="submitfb">Submit feedback</button></div>';
+  } else {
+    h += '<p class="muted">No feedback has been left yet. Only the reporter can leave feedback on this case.</p>';
+  }
+  return h + '</section>';
 }
 function caseView(){
   var c = cases.filter(function(x){ return x.id === ui.caseId; })[0];
   var backLabel = ui.from === 'closed' ? 'Back to closed cases' : 'Back to cases';
   var back = '<div><button class="btn sm" data-action="nav" data-v="' + (ui.from === 'closed' ? 'closed' : 'cases') + '">' + backLabel + '</button></div>';
-  if(!c || !(canFull(c) || c.status === 'Closed')){
+  if(!c || !canFull(c)){
     return '<main class="wrap page">' + back + '<div class="empty">You do not have access to this case.</div></main>';
   }
-  var full = canFull(c), handler = isHandler(c);
+  if(ui.editing && c.reporterId === me.id && c.status === 'Reported') return editReportView(c);
+  var handler = isHandler(c);
+  var isTerminalSide = (c.status === 'Rejected');
   var cur = c.status === 'Closed' ? 4 : STEPS.indexOf(c.status === 'On hold' ? (c.heldFrom || 'Reported') : c.status);
-  var steps = '<ol class="steps" aria-label="Case progress">' + STEPS.map(function(s, i){
+  var stepsHtml = isTerminalSide ? '' : '<ol class="steps" aria-label="Case progress">' + STEPS.map(function(s, i){
     var cls = i < cur ? 'done' : (i === cur ? 'cur' + (c.status === 'On hold' ? ' paused' : '') : '');
     return '<li class="' + cls + '"' + (i === cur ? ' aria-current="step"' : '') + '><span class="dot"></span><span>' + s + '</span></li>';
   }).join('') + '</ol>';
   var h = '<main class="wrap page">' + back +
-    '<div class="pagehead"><h1 style="overflow-wrap:anywhere">' + esc(c.title) + '</h1>' + pill(c.status) + '</div>' +
-    '<section class="card">' + steps + '<p>' + blurb(c) + '</p>' +
-    (c.status === 'On hold' && handler && c.holdNote ? '<p class="small muted">Reason: ' + esc(c.holdNote) + '</p>' : '') + '</section>';
-  if(full){
-    h += '<section class="card"><h2>Case details</h2><dl class="facts" style="margin:0">' +
-      '<div class="fact"><dt>Child involved</dt><dd>' + esc(c.childName) + '</dd></div>' +
-      '<div class="fact"><dt>Reported by</dt><dd>' + esc(nameOf(c.reporterId)) + '</dd></div>' +
-      '<div class="fact"><dt>Reported on</dt><dd>' + fmt(c.createdAt) + '</dd></div>' +
-      '<div class="fact"><dt>Handled by</dt><dd>' + (c.assigneeId ? esc(nameOf(c.assigneeId)) : 'Not assigned yet') + '</dd></div></dl>' +
-      '<div><h3 style="margin-bottom:4px">What the reporter saw</h3><p class="desc">' + esc(c.description) + '</p></div></section>';
-  } else {
-    h += '<section class="card"><p class="muted">The details of this case are private. You can see how it ended and rate how it was handled.</p>' +
-      (c.assigneeId ? '<p>Handled by <b>' + esc(nameOf(c.assigneeId)) + '</b></p>' : '') + '</section>';
-  }
+    '<div class="pagehead"><h1 style="overflow-wrap:anywhere">' + esc(c.caseNumber) + ' — ' + esc(c.title) + '</h1>' +
+    '<span class="btnrow">' + priorityPill(c) + statusPill(c.status) + '</span></div>' +
+    (c.reporterId === me.id && c.status === 'Reported' ? '<div><button class="btn sm" data-action="editreport" data-id="' + c.id + '">Edit report</button></div>' : '') +
+    '<section class="card">' + stepsHtml + '<p>' + blurb(c) + '</p>' +
+    (c.status === 'On hold' && handler && c.holdNote ? '<p class="small muted">Hold reason: ' + esc(c.holdNote) + (c.holdResumeDate ? '. Expected resume: ' + esc(c.holdResumeDate) : '') + '</p>' : '') +
+    (c.status === 'Rejected' && c.rejectReason ? '<p class="small muted">Reason: ' + esc(c.rejectReason) + '</p>' : '') +
+    (c.status === 'Closed' && c.closureNote ? '<p class="small muted">Closure note: ' + esc(c.closureNote) + '</p>' : '') + '</section>';
+  h += '<section class="card"><h2>Child information</h2><dl class="facts" style="margin:0">' +
+    '<div class="fact"><dt>Child name</dt><dd>' + esc(c.childName) + '</dd></div>' +
+    '<div class="fact"><dt>Age</dt><dd>' + esc(c.age || '—') + '</dd></div>' +
+    '<div class="fact"><dt>Gender</dt><dd>' + esc(c.gender || 'Not stated') + '</dd></div></dl></section>';
+  h += '<section class="card"><h2>Incident information</h2><dl class="facts" style="margin:0">' +
+    '<div class="fact"><dt>Abuse type</dt><dd>' + esc(c.abuseType) + '</dd></div>' +
+    '<div class="fact"><dt>Priority</dt><dd>' + esc(c.priority) + '</dd></div>' +
+    '<div class="fact"><dt>Incident date</dt><dd>' + esc(c.incidentDate || '—') + '</dd></div>' +
+    '<div class="fact"><dt>Incident time</dt><dd>' + esc(c.incidentTime || '—') + '</dd></div>' +
+    '<div class="fact"><dt>Incident location</dt><dd>' + esc(c.incidentLocation || '—') + '</dd></div></dl>' +
+    '<div><h3 style="margin-bottom:4px">Description — what the reporter saw</h3><p class="desc">' + esc(c.description) + '</p></div></section>';
+  h += '<section class="card"><h2>Case information</h2><dl class="facts" style="margin:0">' +
+    '<div class="fact"><dt>Reported by</dt><dd>' + esc(nameOf(c.reporterId)) + '</dd></div>' +
+    '<div class="fact"><dt>Assigned officer</dt><dd>' + (c.assigneeId ? esc(nameOf(c.assigneeId)) : 'Not assigned yet') + '</dd></div>' +
+    '<div class="fact"><dt>Date reported</dt><dd>' + fmt(c.createdAt) + '</dd></div>' +
+    '<div class="fact"><dt>Date assigned</dt><dd>' + fmt(c.assignedAt) + '</dd></div>' +
+    '<div class="fact"><dt>Date closed</dt><dd>' + fmt(c.closedAt) + '</dd></div></dl></section>';
   h += actionsCard(c);
-  if(full){
-    h += '<section class="card"><h2>History</h2><ul class="timeline">' + c.history.slice().reverse().map(function(e){
-      return '<li><div><b>' + esc(e.text) + '</b> <span class="muted small">by ' + esc(nameOf(e.by)) + ', ' + fmt(e.ts) + '</span></div>' +
-        (handler && e.note ? '<p class="small desc muted">' + esc(e.note) + '</p>' : '') + '</li>';
-    }).join('') + '</ul></section>';
-  }
+  h += '<section class="card"><h2>Case history</h2><p class="muted small">Automatically recorded system events.</p><ul class="timeline">' + c.history.slice().reverse().map(function(e){
+    return '<li><div><b>' + esc(e.text) + '</b> <span class="muted small">by ' + esc(nameOf(e.by)) + ', ' + fmt(e.ts) + '</span></div>' +
+      (handler && e.note ? '<p class="small desc muted">' + esc(e.note) + '</p>' : '') + '</li>';
+  }).join('') + '</ul></section>';
   if(handler){
     var logs = (c.logs || []).slice().reverse();
-    h += '<section class="card" aria-labelledby="lh"><h2 id="lh">Case log</h2><p class="muted small">Progress updates on this case. Only admins and the assigned officer can see and add entries.</p>' +
-      (c.status !== 'Closed' ?
-        '<div><label for="lognote" style="margin-top:0">New log entry</label><textarea id="lognote" rows="3" placeholder="What has happened on this case?"></textarea></div>' +
+    h += '<section class="card" aria-labelledby="lh"><h2 id="lh">Case log</h2><p class="muted small">Manual investigation notes from the assigned officer or admin. Only staff on this case can see and add entries.</p>' +
+      (c.status !== 'Closed' && c.status !== 'Rejected' ?
+        '<div><label for="lognote" style="margin-top:0">New log entry</label><textarea id="lognote" rows="3" maxlength="5000" placeholder="Investigation note, action taken, or observation."></textarea></div>' +
         '<div><button class="btn primary" data-action="addlog">Add log entry</button></div>' : '') +
       (logs.length ? '<div style="display:grid;gap:14px">' + logs.map(function(l){
         return '<div class="entry"><div class="meta">' + esc(nameOf(l.by)) + ', ' + fmt(l.ts) + '</div><p>' + esc(l.text) + '</p></div>';
       }).join('') + '</div>' : '<p class="muted">No log entries yet.</p>') + '</section>';
+  } else {
+    h += '<section class="card"><h2>Case log</h2><p class="muted">Investigation notes are internal to the admin and assigned officer.</p></section>';
   }
-  if(c.status === 'Closed') h += ratingCard(c);
+  if(c.status === 'Closed') h += feedbackCard(c);
   return h + '</main>';
 }
 
@@ -583,27 +835,71 @@ function staffView(){
   var members = users.length - staff.length;
   return '<main class="wrap page"><div><h1>Staff accounts</h1><p class="muted" style="margin-top:6px">Only admins can create case officer and admin accounts.</p></div>' +
     '<div class="two"><form class="card" data-form="staff"><h2>Create an account</h2>' +
-    '<div><label for="sn" style="margin-top:0">Full name</label><input id="sn" name="name" required>' +
-    '<label for="su">Username</label><input id="su" name="username" autocomplete="off" required>' +
-    '<label for="sp">Password</label><input id="sp" name="password" type="text" autocomplete="off" required><p class="hint">At least 6 characters. Share it with the person privately.</p>' +
+    '<div><label for="sn" style="margin-top:0">Full name</label><input id="sn" name="name" maxlength="120" required>' +
+    '<label for="su">Username</label><input id="su" name="username" maxlength="60" autocomplete="off" required>' +
+    pwField('sp','password','Password',true,'new-password') +
+    pwField('sp2','confirm','Confirm password',true,'new-password') +
+    '<p class="hint">At least 8 characters. Share it with the person privately.</p>' +
     '<label for="sr">Account type</label><select id="sr" name="role"><option value="officer">Case officer</option><option value="admin">Admin</option></select></div>' +
     '<div class="err" id="stferr" role="alert"></div><button class="btn primary">Create account</button></form>' +
     '<section class="card"><h2>Current staff</h2><div class="people">' + staff.map(function(u){
-      var open = cases.filter(function(c){ return c.assigneeId === u.id && c.status !== 'Closed'; }).length;
-      return '<div class="person"><div><b>' + esc(u.name) + '</b><div class="muted small">@' + esc(u.username) + ', ' + open + ' open case' + (open === 1 ? '' : 's') + '</div></div>' +
-        '<span class="role role-' + u.role + '">' + ROLE[u.role] + '</span></div>';
-    }).join('') + '</div><p class="muted small">' + members + ' registered regular user' + (members === 1 ? '' : 's') + '.</p></section></div>' +
-    '<section class="card"><h2>Backup and restore</h2><p class="muted">' + (persistent ? 'Your data is saved in this browser and stays after you reload or close it.' : 'This browser is blocking storage for this page, so data is lost on reload. Export a backup before you close it.') + '</p>' +
-    '<div class="btnrow"><button class="btn primary" data-action="export">Export backup</button></div>' +
-    '<div><label for="imp" style="margin-top:0">Import a backup (replaces everything here)</label><input type="file" id="imp" accept="application/json,.json"></div>' +
-    '<p class="hint">A backup holds all accounts and cases. Keep the file private.</p></section>' +
-    '<section class="card"><h2>Demo data</h2><p class="muted">Clear every account and case saved in this browser and start again with only the default admin.</p>' +
-    '<div class="btnrow">' + (ui.confirmReset ?
-      '<button class="btn danger" data-action="reset-confirmed">Yes, erase everything</button><button class="btn" data-action="cancelreset">Cancel</button>' :
-      '<button class="btn danger" data-action="reset">Reset demo data</button>') + '</div></section></main>';
+      var open = cases.filter(function(c){ return c.assigneeId === u.id && c.status !== 'Closed' && c.status !== 'Rejected'; }).length;
+      var resetting = ui.resetPwFor === u.id;
+      return '<div class="person"><div class="person-head"><div><b>' + esc(u.name) + '</b><div class="muted small">@' + esc(u.username) + ', ' + open + ' open case' + (open === 1 ? '' : 's') + '</div></div>' +
+        '<span class="btnrow"><span class="role role-' + u.role + '">' + ROLE[u.role] + '</span><span class="status-badge status-' + (u.status || 'active') + '">' + ((u.status || 'active') === 'active' ? 'Active' : 'Disabled') + '</span></span></div>' +
+        '<div class="btnrow"><button class="btn sm" data-action="togglestatus" data-id="' + u.id + '">' + ((u.status || 'active') === 'active' ? 'Disable account' : 'Enable account') + '</button>' +
+        '<button class="btn sm" data-action="resetpw" data-id="' + u.id + '">Reset password</button></div>' +
+        (resetting ? '<form data-form="resetpw" data-id="' + u.id + '" class="btnrow" style="align-items:flex-end">' +
+          '<div style="flex:1 1 200px">' + pwField('rspw','newpass','New password',true,'new-password') + '</div>' +
+          '<button class="btn primary sm">Set password</button><button type="button" class="btn sm" data-action="cancelresetpw">Cancel</button></form>' : '') +
+        '</div>';
+    }).join('') + '</div><p class="muted small">' + members + ' registered regular user' + (members === 1 ? '' : 's') + '.</p></section></div></main>';
 }
 
-/* ---------- actions ---------- */
+/* ----- backup & restore ----- */
+function backupView(){
+  var statusText = storageStatus === 'full' ? 'Browser storage is active. Your demonstration data is saved in this browser.' :
+    storageStatus === 'idb-only' ? 'Primary browser storage is unavailable. Backup browser storage is being used.' :
+    'Browser storage is unavailable. Changes may not persist after reload.';
+  return '<main class="wrap page"><h1>Backup &amp; restore</h1>' +
+    '<div class="banner' + (storageStatus === 'full' ? ' ok' : storageStatus === 'none' ? ' warn' : '') + '">' + esc(statusText) + '</div>' +
+    '<section class="card"><h2>Export backup</h2><p class="muted">Downloads every account, case, history entry, log and piece of feedback stored in this browser.</p>' +
+    '<div class="btnrow"><button class="btn primary" data-action="export">Export backup</button></div></section>' +
+    '<section class="card"><h2>Import backup</h2><p class="muted">Replaces all data currently in this browser. You will be asked to confirm first.</p>' +
+    '<label for="imp" style="margin-top:0">Choose a backup file</label><input type="file" id="imp" accept="application/json,.json">' +
+    (ui.confirmImport ? '<div class="banner warn">Importing this backup will replace the current demonstration data. Continue?' +
+      '<div class="btnrow" style="margin-top:10px"><button class="btn danger" data-action="import-confirmed">Yes, import and replace</button><button class="btn" data-action="cancelimport">Cancel</button></div></div>' : '') +
+    '</section>' +
+    '<section class="card"><h2>Reset demo data</h2>' +
+    (ui.confirmReset ?
+      '<div class="banner warn"><b>WARNING.</b> This will permanently remove all demonstration users, cases, logs, history and feedback stored in this browser. This action cannot be undone. Continue?' +
+      '<div class="btnrow" style="margin-top:10px"><button class="btn danger" data-action="reset-confirmed">Yes, erase everything</button><button class="btn" data-action="cancelreset">Cancel</button></div></div>' :
+      '<p class="muted">Clear every account and case saved in this browser and start again with only the default admin.</p><div class="btnrow"><button class="btn danger" data-action="reset">Reset demo data</button></div>') +
+    '</section></main>';
+}
+
+/* ----- profile ----- */
+function profileView(){
+  return '<main class="wrap page"><h1>Profile</h1>' +
+    '<section class="card"><h2>Your details</h2><dl class="facts" style="margin:0">' +
+    '<div class="fact"><dt>Name</dt><dd>' + esc(me.name) + '</dd></div>' +
+    '<div class="fact"><dt>Username</dt><dd>' + esc(me.username) + '</dd></div>' +
+    '<div class="fact"><dt>Account type</dt><dd>' + ROLE[me.role] + '</dd></div>' +
+    (me.email ? '<div class="fact"><dt>Email</dt><dd>' + esc(me.email) + '</dd></div>' : '') +
+    (me.phone ? '<div class="fact"><dt>Phone</dt><dd>' + esc(me.phone) + '</dd></div>' : '') +
+    (me.relationship ? '<div class="fact"><dt>Relationship to child</dt><dd>' + esc(me.relationship) + '</dd></div>' : '') +
+    '</dl></section>' +
+    '<form class="card" data-form="changepw"><h2>Change password</h2>' +
+    pwField('cpcur','current','Current password',true,'current-password') +
+    pwField('cpnew','newpass','New password',true,'new-password') +
+    pwField('cpnew2','confirm','Confirm new password',true,'new-password') +
+    '<p class="hint">At least 8 characters.</p>' +
+    '<div class="err" id="cperr" role="alert"></div><div class="btnrow"><button class="btn primary">Update password</button></div></form></main>';
+}
+
+// ===============================
+// CASE MANAGEMENT — actions
+// ===============================
 function addHistory(c, text, note){
   c.history.push({ ts: Date.now(), by: me.id, text: text, note: note || '' });
   c.updatedAt = Date.now();
@@ -612,22 +908,32 @@ function actNote(){ var e = document.getElementById('actnote'); return e ? e.val
 
 function doTx(c, k){
   var a = allowed(c);
-  var ok = a.tx.some(function(t){ return t.k === k || (k === 'close-confirmed' && t.k === 'close'); });
+  var ok = a.tx.some(function(t){ return t.k === k || (k === 'close-confirmed' && t.k === 'close') || (k === 'reject-confirmed' && t.k === 'reject'); });
   if(!ok){ toast('You cannot make that change.'); return; }
-  var note = actNote();
   if(k === 'review'){
-    c.status = 'Under review'; addHistory(c, 'Marked under review', note);
+    c.status = 'Under review'; addHistory(c, 'Marked under review', actNote());
   } else if(k === 'hold'){
+    var note = actNote();
     if(!note){ toast('Add a note before putting the case on hold.'); return; }
-    c.heldFrom = c.status; c.status = 'On hold'; c.holdNote = note; addHistory(c, 'Put on hold', note);
+    var resumeEl = document.getElementById('holdresume');
+    c.heldFrom = c.status; c.status = 'On hold'; c.holdNote = note; c.holdResumeDate = resumeEl ? resumeEl.value : '';
+    addHistory(c, 'Put on hold', note);
   } else if(k === 'resume'){
     var back = c.heldFrom || 'Under review';
-    c.status = back; c.heldFrom = null; c.holdNote = ''; addHistory(c, 'Resumed, back to ' + back, note);
+    c.status = back; c.heldFrom = null; c.holdNote = ''; c.holdResumeDate = ''; addHistory(c, 'Resumed, back to ' + back, actNote());
+  } else if(k === 'reject'){
+    ui.confirmReject = true; render(); return;
+  } else if(k === 'reject-confirmed'){
+    var rn = document.getElementById('rejnote'); var rv = rn ? rn.value.trim() : '';
+    if(!rv){ toast('A reason is required to reject a case.'); return; }
+    c.status = 'Rejected'; c.rejectReason = rv; addHistory(c, 'Rejected / marked invalid', rv); ui.confirmReject = false;
   } else if(k === 'close'){
-    ui.confirmClose = true; ui.pendingNote = note; render(); return;
+    ui.confirmClose = true; render(); return;
   } else if(k === 'close-confirmed'){
-    c.status = 'Closed'; c.closedAt = Date.now(); c.ratings = c.ratings || {};
-    addHistory(c, 'Closed', note || ui.pendingNote || ''); ui.confirmClose = false; ui.pendingNote = '';
+    var cn = document.getElementById('closenote'); var cv = cn ? cn.value.trim() : '';
+    if(!cv){ toast('A closure note is required to close a case.'); return; }
+    c.status = 'Closed'; c.closedAt = Date.now(); c.closureNote = cv;
+    addHistory(c, 'Closed', cv); ui.confirmClose = false;
   }
   save(); render(); toast('Case updated.');
 }
@@ -638,74 +944,96 @@ function doAssign(c){
   var target = userById(sel && sel.value);
   if(!target || target.role === 'user'){ toast('Choose a case officer or admin.'); return; }
   var was = c.assigneeId;
-  c.assigneeId = target.id; c.status = 'Assigned';
+  c.assigneeId = target.id; c.status = 'Assigned'; c.assignedAt = Date.now();
   addHistory(c, (was ? 'Reassigned to ' : 'Assigned to ') + target.name, actNote());
   save(); render(); toast('Case assigned to ' + target.name + '.');
 }
-
-function exportData(){
-  var data = { app:'cpcr2', version:1, exportedAt: new Date().toISOString(), users: users, cases: cases };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'case-system-backup-' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
-  toast('Backup downloaded.');
+function findDuplicate(reporterId, title, child){
+  var t = title.trim().toLowerCase(), cn = child.trim().toLowerCase();
+  return cases.filter(function(c){ return c.reporterId === reporterId && c.title.trim().toLowerCase() === t && c.childName.trim().toLowerCase() === cn; })[0] || null;
 }
-function importData(file){
-  var r = new FileReader();
-  r.onload = function(){
-    try {
-      var d = JSON.parse(r.result);
-      if(!d || d.app !== 'cpcr2' || !Array.isArray(d.users) || !Array.isArray(d.cases)) throw new Error('bad');
-      var okR = { user:1, officer:1, admin:1 };
-      var us = d.users.filter(function(u){ return u && u.id && u.username && u.pass && okR[u.role]; });
-      if(!us.some(function(u){ return u.role === 'admin'; })) throw new Error('no admin');
-      var cs = d.cases.filter(function(c){ return c && c.id && c.title; }).map(function(c){
-        c.history = Array.isArray(c.history) ? c.history : [];
-        c.logs = Array.isArray(c.logs) ? c.logs : [];
-        c.ratings = (c.ratings && typeof c.ratings === 'object') ? c.ratings : {};
-        if(!SLUG[c.status]) c.status = 'Reported';
-        return c;
-      });
-      var myId = me && me.id;
-      users = us; cases = cs; save();
-      me = userById(myId);
-      if(!me){ store.remove('session'); mirror(); ui.auth = 'login'; render(); toast('Backup restored. Please log in again.'); return; }
-      resetUi(); ui.view = 'staff'; render(); toast('Backup restored.');
-    } catch(e){ toast('That file is not a valid backup.'); }
+function readReportForm(f){
+  return {
+    title: f.title.value.trim(), childName: f.child.value.trim(), age: f.age.value,
+    gender: f.gender.value, abuseType: f.abuseType.value, priority: f.priority.value || 'Medium',
+    incidentDate: f.incidentDate.value, incidentTime: f.incidentTime.value,
+    incidentLocation: f.incidentLocation.value.trim(), description: f.desc.value.trim()
   };
-  r.readAsText(file);
+}
+function validateReport(v){
+  if(!v.title || !v.childName || !v.abuseType || !v.incidentDate || !v.incidentLocation || !v.description) return 'Please fill in every required field.';
+  var age = parseInt(v.age, 10);
+  if(isNaN(age) || age < 0 || age > 17) return 'Enter a child age between 0 and 17.';
+  return null;
+}
+function createCase(v){
+  var now = Date.now();
+  var nc = { id: uid(), caseNumber: nextCaseNumber(), title: v.title, childName: v.childName, age: v.age, gender: v.gender,
+    abuseType: v.abuseType, priority: v.priority, incidentDate: v.incidentDate, incidentTime: v.incidentTime,
+    incidentLocation: v.incidentLocation, description: v.description,
+    reporterId: me.id, status: 'Reported', assigneeId: null, assignedAt: null, heldFrom: null, holdNote: '', holdResumeDate: '',
+    rejectReason: '', createdAt: now, updatedAt: now, closedAt: null, closureNote: '',
+    history: [{ ts: now, by: me.id, text: 'Case reported', note: '' }], logs: [], feedback: null };
+  cases.push(nc); save();
+  ui.scope = 'mine'; ui.state = 'all'; ui.q = '';
+  go('case', { caseId: nc.id, from: 'cases' }); toast('Case reported. An admin will review it.');
 }
 
-/* ---------- events ---------- */
+// ===============================
+// EVENTS
+// ===============================
 document.addEventListener('click', async function(e){
   var t = e.target.closest('[data-action]'); if(!t) return;
   var a = t.getAttribute('data-action');
   var c = ui.caseId ? cases.filter(function(x){ return x.id === ui.caseId; })[0] : null;
-  if(a === 'authtab'){ ui.auth = t.getAttribute('data-v'); render(); }
+
+  if(a === 'togglepw'){
+    var el = document.getElementById(t.getAttribute('data-target'));
+    if(el){ var show = el.type === 'password'; el.type = show ? 'text' : 'password'; t.textContent = show ? 'Hide' : 'Show'; }
+  }
+  else if(a === 'authtab'){ ui.auth = t.getAttribute('data-v'); render(); }
   else if(a === 'nav'){ go(t.getAttribute('data-v'), { caseId: null }); }
   else if(a === 'logout'){ store.remove('session'); mirror(); me = null; ui.auth = 'login'; render(); window.scrollTo(0,0); }
   else if(a === 'scope'){ ui.scope = t.getAttribute('data-v'); ui.state = 'all'; render(); }
   else if(a === 'filter'){ ui.state = t.getAttribute('data-v'); renderList(); }
   else if(a === 'open'){ go('case', { caseId: t.getAttribute('data-id'), from: t.getAttribute('data-from') || 'cases' }); }
+  else if(a === 'editreport'){ ui.editing = true; render(); window.scrollTo(0,0); }
   else if(a === 'tx' && c){ doTx(c, t.getAttribute('data-k')); }
   else if(a === 'cancelclose'){ ui.confirmClose = false; render(); }
+  else if(a === 'cancelreject'){ ui.confirmReject = false; render(); }
   else if(a === 'assign' && c){ doAssign(c); }
   else if(a === 'addlog' && c){
     var box = document.getElementById('lognote'); var v = box ? box.value.trim() : '';
-    if(!isHandler(c) || c.status === 'Closed'){ toast('You cannot add a log entry here.'); return; }
+    if(!isHandler(c) || c.status === 'Closed' || c.status === 'Rejected'){ toast('You cannot add a log entry here.'); return; }
     if(!v){ toast('Write something before adding the entry.'); return; }
     c.logs = c.logs || []; c.logs.push({ id: uid(), ts: Date.now(), by: me.id, text: v });
     c.updatedAt = Date.now(); save(); render(); toast('Log entry added.');
   }
-  else if(a === 'rate' && c){
-    var n = parseInt(t.getAttribute('data-n'), 10);
-    if(c.status !== 'Closed' || c.assigneeId === me.id || isNaN(n) || n < 0 || n > 10) return;
-    c.ratings = c.ratings || {}; c.ratings[me.id] = n; save(); render(); toast('Thanks, you rated this case ' + n + ' out of 10.');
+  else if(a === 'pickfb'){ ui.fbPick = parseInt(t.getAttribute('data-n'), 10); render(); }
+  else if(a === 'submitfb' && c){
+    if(!canRate(c)){ toast('Only the reporter can leave feedback on this case.'); return; }
+    if(c.feedback){ toast('Feedback has already been submitted for this case.'); return; }
+    if(!ui.fbPick){ toast('Choose a rating from 1 to 5.'); return; }
+    var cm = document.getElementById('fbcomment');
+    c.feedback = { rating: ui.fbPick, comment: cm ? cm.value.trim() : '', by: me.id, date: Date.now() };
+    ui.fbPick = null; save(); render(); toast('Thank you, your feedback has been recorded.');
   }
   else if(a === 'export' && me.role === 'admin'){ exportData(); }
+  else if(a === 'cancelimport'){ ui.confirmImport = null; render(); }
+  else if(a === 'import-confirmed' && me.role === 'admin' && ui.confirmImport){ applyImport(ui.confirmImport); }
+  else if(a === 'togglestatus' && me.role === 'admin'){
+    var u = userById(t.getAttribute('data-id'));
+    if(!u || u.role === 'user') return;
+    if(u.id === me.id){ toast('You cannot disable your own account.'); return; }
+    var willDisable = (u.status || 'active') === 'active';
+    if(willDisable && u.role === 'admin'){
+      var activeAdmins = users.filter(function(x){ return x.role === 'admin' && (x.status || 'active') === 'active'; });
+      if(activeAdmins.length <= 1){ toast('At least one active admin account must remain.'); return; }
+    }
+    u.status = willDisable ? 'disabled' : 'active'; save(); render(); toast(u.name + ' is now ' + u.status + '.');
+  }
+  else if(a === 'resetpw'){ ui.resetPwFor = t.getAttribute('data-id'); render(); }
+  else if(a === 'cancelresetpw'){ ui.resetPwFor = null; render(); }
   else if(a === 'reset'){ ui.confirmReset = true; render(); }
   else if(a === 'cancelreset'){ ui.confirmReset = false; render(); }
   else if(a === 'reset-confirmed' && me.role === 'admin'){
@@ -715,13 +1043,69 @@ document.addEventListener('click', async function(e){
 });
 
 document.addEventListener('change', function(e){
-  if(e.target && e.target.id === 'imp' && me && me.role === 'admin' && e.target.files && e.target.files[0]){ importData(e.target.files[0]); }
+  if(e.target && e.target.id === 'imp' && me && me.role === 'admin' && e.target.files && e.target.files[0]){ readImportFile(e.target.files[0]); }
+  else if(e.target && e.target.hasAttribute && e.target.hasAttribute('data-filter')){
+    var kind = e.target.getAttribute('data-filter'), val = e.target.value;
+    if(kind === 'abuse') ui.abuseFilter = val;
+    else if(kind === 'priority') ui.prioFilter = val;
+    else if(kind === 'officer') ui.officerFilter = val;
+    renderList();
+  }
 });
 
 document.addEventListener('input', function(e){
-  if(e.target && e.target.id === 'q'){ ui.q = e.target.value; renderList(); }
+  if(e.target && e.target.id === 'q'){ ui.q = e.target.value; if(ui.view === 'cases') renderList(); else if(ui.view === 'closed') renderClosedList(); }
 });
 
+// ===============================
+// BACKUP / RESTORE
+// ===============================
+function exportData(){
+  var data = { app:'cams', version:2, exportedAt: new Date().toISOString(), users: users, cases: cases };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'child-abuse-mgt-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+  toast('Backup downloaded.');
+}
+function readImportFile(file){
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var d = JSON.parse(r.result);
+      if(!d || (d.app !== 'cams' && d.app !== 'cpcr2') || !Array.isArray(d.users) || !Array.isArray(d.cases)) throw new Error('bad');
+      var okR = { user:1, officer:1, admin:1 };
+      var us = d.users.filter(function(u){ return u && u.id && u.username && u.pass && okR[u.role]; });
+      if(!us.some(function(u){ return u.role === 'admin'; })) throw new Error('no admin');
+      ui.confirmImport = d; render();
+    } catch(e){ toast('That file is not a valid backup.'); }
+  };
+  r.readAsText(file);
+}
+function applyImport(d){
+  var seen = {}; var us = [];
+  d.users.forEach(function(u){ if(u && u.id && !seen[u.id]){ seen[u.id] = 1; if(!u.status) u.status = 'active'; us.push(u); } });
+  var seenC = {}; var cs = [];
+  d.cases.forEach(function(c){
+    if(!c || !c.id || seenC[c.id]) return; seenC[c.id] = 1;
+    c.history = Array.isArray(c.history) ? c.history : [];
+    c.logs = Array.isArray(c.logs) ? c.logs : [];
+    if(c.feedback === undefined) c.feedback = null;
+    cs.push(c);
+  });
+  var myId = me && me.id;
+  users = us; cases = cs; migrateCases(); save();
+  me = userById(myId);
+  ui.confirmImport = null;
+  if(!me){ store.remove('session'); mirror(); ui.auth = 'login'; render(); toast('Backup restored. Please log in again.'); return; }
+  resetUi(); ui.view = 'backup'; render(); toast('Backup restored.');
+}
+
+// ===============================
+// FORMS
+// ===============================
 document.addEventListener('submit', async function(e){
   var f = e.target.closest('form[data-form]'); if(!f) return;
   e.preventDefault();
@@ -732,42 +1116,85 @@ document.addEventListener('submit', async function(e){
   if(kind === 'login'){
     var u = f.username.value.trim().toLowerCase();
     var rec = users.filter(function(x){ return x.username === u; })[0];
-    var h = await hash(u, f.password.value);
+    if(rec && (rec.status || 'active') === 'disabled'){ fail('autherr', 'This account has been disabled.'); return; }
+    var h;
+    try { h = await hash(u, f.password.value); } catch(err){ fail('autherr', 'This browser cannot verify passwords securely. Try a modern browser.'); return; }
     if(!rec || rec.pass !== h){ fail('autherr', 'The username or password is wrong.'); return; }
     me = rec; store.set('session', me.id); mirror(); resetUi(); render(); window.scrollTo(0,0);
   }
   else if(kind === 'register'){
-    var name = f.name.value.trim(), un = f.username.value.trim().toLowerCase(), pw = f.password.value;
+    var name = f.name.value.trim(), un = f.username.value.trim().toLowerCase(), pw = f.password.value, pw2 = f.confirm.value;
     if(!name){ fail('autherr', 'Enter your name.'); return; }
     if(!okUser.test(un)){ fail('autherr', 'Username needs at least 3 letters, numbers, dots, dashes or underscores.'); return; }
-    if(pw.length < 6){ fail('autherr', 'Password needs at least 6 characters.'); return; }
-    load();
+    if(pw.length < 8){ fail('autherr', 'Password needs at least 8 characters.'); return; }
+    if(pw !== pw2){ fail('autherr', 'Passwords do not match.'); return; }
+    await load();
     if(users.some(function(x){ return x.username === un; })){ fail('autherr', 'That username is taken. Choose another.'); return; }
-    var nu = { id: uid(), name: name, username: un, pass: await hash(un, pw), role: 'user', createdAt: Date.now() };
+    var nu;
+    try { nu = { id: uid(), name: name, username: un, pass: await hash(un, pw), role: 'user', status:'active',
+      email: f.email.value.trim(), phone: f.phone.value.trim(), relationship: f.relationship.value, createdAt: Date.now() }; }
+    catch(err){ fail('autherr', 'This browser cannot create secure accounts. Try a modern browser.'); return; }
     users.push(nu); save(); me = nu; store.set('session', me.id); mirror(); resetUi(); render(); toast('Welcome, ' + name + '.');
   }
   else if(kind === 'report'){
-    var title = f.title.value.trim(), child = f.child.value.trim(), desc = f.desc.value.trim();
-    if(!title || !child || !desc){ fail('reperr', 'Fill in the title, the child\'s name and what you saw.'); return; }
-    load();
-    var now = Date.now();
-    var nc = { id: uid(), title: title, childName: child, description: desc, reporterId: me.id, status: 'Reported',
-      assigneeId: null, heldFrom: null, holdNote: '', createdAt: now, updatedAt: now, closedAt: null,
-      history: [{ ts: now, by: me.id, text: 'Case reported', note: '' }], logs: [], ratings: {} };
-    cases.push(nc); save();
-    ui.scope = 'mine'; ui.state = 'all'; ui.q = '';
-    go('case', { caseId: nc.id, from: 'cases' }); toast('Case reported. An admin will review it.');
+    var v = readReportForm(f);
+    var verr = validateReport(v);
+    if(verr){ fail('reperr', verr); return; }
+    await load();
+    var dupWrap = document.getElementById('dupwrap');
+    if(!ui.pendingReport){
+      var dup = findDuplicate(me.id, v.title, v.childName);
+      if(dup){
+        ui.pendingReport = v;
+        if(dupWrap) dupWrap.innerHTML = '<div class="banner warn">A similar case already exists (' + esc(dup.caseNumber) + '). Do you want to continue submitting this report?' +
+          '<div class="btnrow" style="margin-top:10px"><button type="submit" class="btn danger">Continue and submit anyway</button><button type="button" class="btn" data-action="nav" data-v="cases">Cancel</button></div></div>';
+        return;
+      }
+    }
+    ui.pendingReport = null;
+    createCase(v);
+  }
+  else if(kind === 'editreport'){
+    var ec = cases.filter(function(x){ return x.id === f.getAttribute('data-id'); })[0];
+    if(!ec || ec.reporterId !== me.id || ec.status !== 'Reported'){ fail('editerr', 'This report can no longer be edited.'); return; }
+    var ev = readReportForm(f);
+    var everr = validateReport(ev);
+    if(everr){ fail('editerr', everr); return; }
+    for(var k in ev) ec[k] = ev[k];
+    ec.updatedAt = Date.now();
+    addHistory(ec, 'Report edited by reporter', '');
+    save(); ui.editing = false; go('case', { caseId: ec.id, from: ui.from }); toast('Report updated.');
   }
   else if(kind === 'staff' && me.role === 'admin'){
-    var sn = f.name.value.trim(), su = f.username.value.trim().toLowerCase(), sp = f.password.value, sr = f.role.value;
+    var sn = f.name.value.trim(), su = f.username.value.trim().toLowerCase(), sp = f.password.value, sp2 = f.confirm.value, sr = f.role.value;
     if(!sn){ fail('stferr', 'Enter the person\'s full name.'); return; }
     if(!okUser.test(su)){ fail('stferr', 'Username needs at least 3 letters, numbers, dots, dashes or underscores.'); return; }
-    if(sp.length < 6){ fail('stferr', 'Password needs at least 6 characters.'); return; }
+    if(sp.length < 8){ fail('stferr', 'Password needs at least 8 characters.'); return; }
+    if(sp !== sp2){ fail('stferr', 'Passwords do not match.'); return; }
     if(sr !== 'officer' && sr !== 'admin'){ fail('stferr', 'Choose an account type.'); return; }
-    load();
+    await load();
     if(users.some(function(x){ return x.username === su; })){ fail('stferr', 'That username is taken. Choose another.'); return; }
-    users.push({ id: uid(), name: sn, username: su, pass: await hash(su, sp), role: sr, createdAt: Date.now(), createdBy: me.id });
-    save(); render(); toast(ROLE[sr] + ' account created for ' + sn + '.');
+    var nsu;
+    try { nsu = { id: uid(), name: sn, username: su, pass: await hash(su, sp), role: sr, status:'active', createdAt: Date.now(), createdBy: me.id }; }
+    catch(err){ fail('stferr', 'This browser cannot create secure accounts. Try a modern browser.'); return; }
+    users.push(nsu); save(); render(); toast(ROLE[sr] + ' account created for ' + sn + '.');
+  }
+  else if(kind === 'resetpw' && me.role === 'admin'){
+    var targetId = f.getAttribute('data-id'); var target = userById(targetId);
+    if(!target) return;
+    var np = f.newpass.value;
+    if(np.length < 8){ toast('Password needs at least 8 characters.'); return; }
+    try { target.pass = await hash(target.username, np); } catch(err){ toast('This browser cannot update passwords securely.'); return; }
+    ui.resetPwFor = null; save(); render(); toast('Password reset for ' + target.name + '.');
+  }
+  else if(kind === 'changepw'){
+    var cur = f.current.value, nw = f.newpass.value, nw2 = f.confirm.value;
+    var curHash; try { curHash = await hash(me.username, cur); } catch(err){ fail('cperr', 'This browser cannot verify passwords securely.'); return; }
+    if(curHash !== me.pass){ fail('cperr', 'Your current password is incorrect.'); return; }
+    if(nw.length < 8){ fail('cperr', 'New password needs at least 8 characters.'); return; }
+    if(nw !== nw2){ fail('cperr', 'New passwords do not match.'); return; }
+    try { me.pass = await hash(me.username, nw); } catch(err){ fail('cperr', 'This browser cannot update passwords securely.'); return; }
+    save(); render(); toast('Password updated.');
   }
 });
 
